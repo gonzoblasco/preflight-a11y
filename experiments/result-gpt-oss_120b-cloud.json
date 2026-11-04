@@ -1,0 +1,51 @@
+{
+  "model": "gpt-oss:120b-cloud",
+  "ranAt": "2026-11-04T13:24:13.425Z",
+  "baseline": {
+    "score": 7,
+    "grade": "F",
+    "findings": [
+      "image-alt",
+      "color-contrast",
+      "html-has-lang",
+      "list",
+      "heading-order",
+      "landmark-one-main",
+      "meta-viewport",
+      "region"
+    ]
+  },
+  "runs": [
+    {
+      "run": 1,
+      "ok": true,
+      "scoreBefore": 7,
+      "scoreAfter": 91,
+      "gradeAfter": "B",
+      "closed": [
+        "image-alt",
+        "html-has-lang",
+        "list",
+        "heading-order",
+        "landmark-one-main",
+        "meta-viewport",
+        "region"
+      ],
+      "persisted": [
+        "color-contrast"
+      ],
+      "introduced": [],
+      "totalBefore": 8,
+      "latencyMs": 3899,
+      "outputTokens": 1632
+    }
+  ],
+  "totals": {
+    "runs": 1,
+    "meanScoreAfter": 91,
+    "meanClosedRatio": 0.88,
+    "meanLatencyMs": 3899,
+    "meanOutputTokens": 1632,
+    "introducedTotal": 0
+  }
+}

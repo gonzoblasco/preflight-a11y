@@ -163,6 +163,10 @@ export async function scanPage(url: string, options: ScanOptions = {}): Promise<
             draft: {
               ...draft,
               target: draft.target === node.selector ? inferTarget(node.selector) : draft.target,
+              // Carries the measured cause forward so the prompt can group
+              // failures sharing one source (a CSS variable, a font size)
+              // instead of asking for the same repair twice.
+              causeKey: causeOf(finding.id, node.failureSummary),
             },
           });
         });
@@ -229,6 +233,25 @@ export class ScanError extends Error {
     super(message);
     this.name = 'ScanError';
   }
+}
+
+/**
+ * Identifies the underlying cause of a failure, when the tool can see one.
+ *
+ * Two elements can fail `color-contrast` for the same reason: both inherit a
+ * single CSS custom property. Reporting them as two unrelated repairs sends the
+ * builder to fix one element and leaves the rule open — measured on the repair
+ * experiment, where three models fixed the hero paragraph and missed the footer
+ * because nobody had told them the colour came from one variable.
+ */
+function causeOf(ruleId: string, failureSummary?: string): string | undefined {
+  if (!failureSummary) return undefined;
+  if (ruleId === 'color-contrast') {
+    const fg = failureSummary.match(/foreground color: (#[0-9a-f]{3,8})/i)?.[1];
+    const bg = failureSummary.match(/background color: (#[0-9a-f]{3,8})/i)?.[1];
+    if (fg && bg) return `contrast:${fg.toLowerCase()}:${bg.toLowerCase()}`;
+  }
+  return undefined;
 }
 
 async function collectSignals(page: import('playwright').Page): Promise<PageSignals> {

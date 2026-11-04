@@ -21,6 +21,7 @@
 | CLI | `npx tsx scripts/cli.ts example.com` prints transcript + findings + prompt |
 | **Real-world scan** | `stripe.com` → 51/100 D, 2 blocking; findings verified by hand against the DOM. No false positives. |
 | **Bot-blocking handled** | `lovable.dev` returns 403; the scan fails with "The site returned HTTP 403. A public page is required." rather than a stack trace. |
+| **Repair loop measured** | Three model families, re-scanned by the same engine: 97/100 mean, **95.8% of findings closed, 0 regressions**. See `.knowledge/EXPERIMENT-REPAIR-LOOP.md`. |
 
 ## What is deliberately not done
 
@@ -44,6 +45,12 @@
 
 ## Next action
 
-The only experiment that matters: paste three generated fix prompts into real AI
-builders and measure how many findings actually close. Everything else is
-polish on an unvalidated loop.
+The repair loop is validated (95.8% closure, 0 regressions, three model families).
+The next step is no longer "does it work" but "who pays": deploy the scan route
+to a container with a persistent Chromium, wire Stripe, and put the CLI in front
+of a developer who already ships with Cursor.
+
+Open product gap found by measurement: **the prompt is not model-agnostic.**
+`gpt-oss` declined a multi-element instruction three times while two other
+families closed it from identical text. The report should state which builders
+the prompt was verified against.

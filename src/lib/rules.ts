@@ -36,6 +36,8 @@ export interface StepDraft {
   instruction: string;
   snippet?: string;
   acceptance: string;
+  /** Optional key identifying a shared cause, e.g. `contrast:#b9bcc4:#ffffff`. */
+  causeKey?: string;
 }
 
 /** Truncates HTML for display without cutting an entity in half. */
@@ -56,7 +58,7 @@ export const RULES: Record<string, RuleCopy> = {
     fix: (n) => ({
       target: n.selector,
       instruction:
-        'Add an alt attribute. If the image conveys information, write what it communicates in one sentence. If it is purely decorative, use alt="" (empty) so assistive tech skips it.',
+        'Add an alt attribute to EVERY image on the page, not only the one below. If an image conveys information, write what it communicates in one sentence. If it is purely decorative, use alt="" (empty) so assistive tech skips it.',
       snippet: `<img src="…" alt="Describe what the image shows" />  <!-- or alt="" if decorative -->`,
       acceptance:
         'After the fix, the screen reader announces "image, <your description>" instead of a bare "image".',
@@ -101,13 +103,31 @@ export const RULES: Record<string, RuleCopy> = {
       'Nothing is announced differently — this one is silent. The user simply cannot read the words, and there is no workaround.',
     remediation:
       'Raise the text/background contrast to at least 4.5:1 for body text and 3:1 for large text.',
-    fix: (n) => ({
-      target: n.selector,
-      instruction:
-        'Darken the text or lighten the background until the contrast ratio reaches 4.5:1 (3:1 for text 24px+, or 19px+ bold).',
-      snippet: `/* example */ color: #1a1a1a; /* was #bbbbbb on white */`,
-      acceptance: 'Re-run Preflight: the contrast rule passes with a ratio of at least 4.5:1.',
-    }),
+    fix: (n) => {
+      // The measured values come from axe itself. An editor that only receives
+      // markup cannot compute them, so the prompt states them as facts instead
+      // of asking the builder to guess. This is the one rule class that
+      // consistently resisted three capable models in the repair experiment.
+      const measured = n.failureSummary ?? '';
+      const ratio = measured.match(/contrast of ([\d.]+)/i)?.[1];
+      const fg = measured.match(/foreground color: (#[0-9a-f]{3,8})/i)?.[1];
+      const bg = measured.match(/background color: (#[0-9a-f]{3,8})/i)?.[1];
+      const facts = [
+        ratio ? `measured ratio ${ratio}:1 (needs 4.5:1)` : null,
+        fg ? `foreground ${fg}` : null,
+        bg ? `background ${bg}` : null,
+      ].filter(Boolean);
+
+      return {
+        target: n.selector,
+        instruction:
+          "Change the text or background colour of THIS rule, not the element's markup. " +
+          (facts.length ? `Measured: ${facts.join(', ')}. ` : '') +
+          'Reach at least 4.5:1 for body text (3:1 for 24px+, or 19px+ bold), then verify.',
+        snippet: fg && bg ? `color: #1a1a1a;      /* was ${fg} on ${bg} */` : undefined,
+        acceptance: 'Re-run Preflight: the contrast rule reports no failing elements on this page.',
+      };
+    },
   },
   'document-title': {
     plainLanguage:

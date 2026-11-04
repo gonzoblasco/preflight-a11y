@@ -199,4 +199,56 @@ describe('fix prompt', () => {
     expect(prompt.steps).toHaveLength(1);
     expect(prompt.text).toContain('Current score: 40/100');
   });
+
+  it('emits one step per element for per-element rules, one per rule for collective ones', () => {
+    const node = (selector: string) => ({ selector, html: `<p class="${selector}">x</p>` });
+    const contrast = {
+      id: 'color-contrast',
+      impact: 'serious' as const,
+      title: 'Contrast',
+      plainLanguage: 'x',
+      wcag: ['1.4.3'],
+      nodes: [node('a'), node('b')],
+      livedExperience: null,
+      remediation: 'x',
+    };
+    const images = {
+      id: 'image-alt',
+      impact: 'critical' as const,
+      title: 'Images',
+      plainLanguage: 'x',
+      wcag: ['1.1.1'],
+      nodes: [node('c'), node('d'), node('e')],
+      livedExperience: null,
+      remediation: 'x',
+    };
+    const step = (target: string) => ({ target, instruction: 'do', acceptance: 'verify this one' });
+
+    const prompt = buildFixPrompt({
+      url: 'https://example.com',
+      score: {
+        value: 50,
+        grade: 'D',
+        blocking: 2,
+        byImpact: { critical: 3, serious: 2, moderate: 0, minor: 0 },
+      },
+      findings: [contrast, images],
+      steps: [
+        { finding: contrast, nodeIndex: 0, draft: step('.hero > p') },
+        { finding: contrast, nodeIndex: 1, draft: step('footer span') },
+        { finding: images, nodeIndex: 0, draft: step('img.a') },
+        { finding: images, nodeIndex: 1, draft: step('img.b') },
+        { finding: images, nodeIndex: 2, draft: step('img.c') },
+      ],
+    });
+
+    const contrasts = prompt.steps.filter(
+      (s) => s.target === '.hero > p' || s.target === 'footer span',
+    );
+    const imageSteps = prompt.steps.filter((s) => s.target.startsWith('img.'));
+    // Two distinct contrast elements are two distinct repairs.
+    expect(contrasts).toHaveLength(2);
+    // Three images are one collective instruction.
+    expect(imageSteps).toHaveLength(1);
+  });
 });

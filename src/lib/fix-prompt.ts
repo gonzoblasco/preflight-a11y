@@ -48,12 +48,36 @@ export function buildFixPrompt(input: PromptInput): FixPrompt {
     return a.finding.id.localeCompare(b.finding.id) || a.nodeIndex - b.nodeIndex;
   });
 
-  // One step per rule: repeating "add alt" for nine images burns the context
-  // window and teaches the builder nothing new.
+  /**
+   * Rules whose instruction is collective: one step covers every affected
+   * element, so repeating it per node teaches the builder nothing and burns
+   * the context window. Everything else gets one step per *element*, because
+   * a `color-contrast` failure on the hero paragraph and one on the footer
+   * span are different repairs — deduping by rule id told the builder about
+   * the first and left the second failing, which is how a rule survives a fix.
+   */
+  const COLLECTIVE = new Set(['image-alt', 'button-name', 'link-name', 'region', 'label']);
+
   const seen = new Set<string>();
+  const causeGroups = new Map<string, string[]>();
   const unique = ordered.filter((step) => {
-    if (seen.has(step.finding.id)) return false;
-    seen.add(step.finding.id);
+    // Two failures with the same measured cause share one repair. Record the
+    // second selector so the single step can name every element it covers.
+    if (step.draft.causeKey) {
+      const existing = causeGroups.get(step.draft.causeKey);
+      if (existing) {
+        existing.push(step.finding.nodes[step.nodeIndex]?.selector ?? step.draft.target);
+        return false;
+      }
+      causeGroups.set(step.draft.causeKey, [
+        step.finding.nodes[step.nodeIndex]?.selector ?? step.draft.target,
+      ]);
+    }
+    const key = COLLECTIVE.has(step.finding.id)
+      ? step.finding.id
+      : `${step.finding.id}::${step.draft.target}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
 
@@ -92,6 +116,14 @@ export function buildFixPrompt(input: PromptInput): FixPrompt {
     lines.push(`Selector: ${selected[step.order - 1]?.finding.nodes[0]?.selector ?? ''}`);
     if (finding?.nodes[0]?.html) {
       lines.push(`Current markup: ${clip(finding.nodes[0].html, 200)}`);
+    }
+    const cause = selected[step.order - 1]?.draft.causeKey;
+    const affected = cause ? causeGroups.get(cause) : undefined;
+    if (affected && affected.length > 1) {
+      lines.push(
+        `Affects ${affected.length} elements that share this cause. Fix the shared source (a CSS variable or rule), not each element separately:`,
+      );
+      for (const selector of affected) lines.push(`  - ${selector}`);
     }
     lines.push(`Do: ${step.instruction}`);
     if (step.snippet) {
