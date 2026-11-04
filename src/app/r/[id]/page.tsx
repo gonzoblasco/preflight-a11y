@@ -133,7 +133,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                           {node.selector}
                         </div>
                         <pre>
-                          <code>{node.html}</code>
+                          <code className="evidence">{node.html}</code>
                         </pre>
                       </div>
                     ))}

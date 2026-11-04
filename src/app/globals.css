@@ -391,8 +391,17 @@ pre {
   font-family: var(--font-mono);
   font-size: 0.875rem;
   border: 1px solid var(--border);
+  /* The fix prompt is prose for a machine, not a diff: wrap it so it is
+     readable without horizontal scrolling. Selection and copy are unaffected. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
 }
 
+/* Element evidence stays unwrapped: a selector broken across lines is unusable. */
+pre code.evidence {
+  white-space: pre;
+}
 .signals-dl {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

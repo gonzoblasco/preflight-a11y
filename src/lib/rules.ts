@@ -153,6 +153,21 @@ export const RULES: Record<string, RuleCopy> = {
         'After the fix, the reader announces "textbox, Email" when focus lands on the field.',
     }),
   },
+  'page-has-heading-one': {
+    plainLanguage:
+      'The page has no top-level heading, so there is no single sentence telling a visitor what this page is.',
+    wcag: ['1.3.1', '2.4.6'],
+    livedExperience:
+      'A user pressing the heading shortcut gets nothing, or starts at level 2 with no idea what came before. The page has no title in its outline.',
+    remediation: 'Add exactly one h1 that names the page.',
+    fix: () => ({
+      target: 'app/page.tsx',
+      instruction:
+        'Add one <h1> that states what this page is. Other section titles become <h2>. Keep the visual size with CSS.',
+      snippet: `<h1 class="text-5xl">Ship faster</h1>`,
+      acceptance: 'After the fix, the reader announces "heading, <page title>, level 1".',
+    }),
+  },
   'heading-order': {
     plainLanguage:
       'Headings skip levels, so the page outline reads like a damaged table of contents.',

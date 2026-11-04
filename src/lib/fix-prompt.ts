@@ -32,6 +32,10 @@ export function inferTarget(selector: string): string {
   if (section?.[1]) return `the section #${section[1]}`;
   const landmark = selector.match(/\b(header|nav|main|footer|aside|form|dialog)\b/i);
   if (landmark?.[1]) return `the <${landmark[1].toLowerCase()}> region`;
+  // A bare `html`, `body` or `p` selector means a document-wide defect: the
+  // instruction applies to the whole page, not to one element.
+  if (/^(html|body)$/i.test(selector.trim())) return 'the document root';
+  if (/^[a-z][a-z0-9]*$/i.test(selector.trim())) return `the <${selector.trim()}> elements`;
   return 'the element at the selector below';
 }
 
