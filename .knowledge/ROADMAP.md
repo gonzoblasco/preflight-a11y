@@ -155,6 +155,34 @@ Adding a write tool would require an approval card on every call and destroy the
 
 ---
 
+## Phase 0.3.1 — Fix the flaky measurement (found by a real customer)
+
+**Goal.** Stop reporting contrast failures that exist only mid-animation.
+
+**Why it is urgent, not cosmetic.** The SoporteML run produced a false positive on
+a paying product: three chips measured 2.21:1 because the scanner sampled them at
+52% opacity during a framer-motion entrance fade. The settled value was 5.15:1.
+A tool that cries wolf on a customer's live site loses the customer.
+
+**Work**
+1. Replace the fixed 600 ms wait with a stability wait: sample the computed style
+   of the failing nodes until two consecutive reads match.
+2. Inject a stylesheet that neutralises `animation` and `transition` before
+   analysis, as a second line of defence.
+3. Re-scan each finding once before reporting it. Never report a finding that
+   disappears on the second read without labelling it as flaky.
+4. Add a fixture with a staggered opacity animation so the regression is caught
+   by the suite, not by a customer.
+
+**Exit gate**
+- The animation fixture reports zero contrast failures, three runs in a row.
+- The `stripe.com` and `soporteml.com` scans are unchanged.
+- A test asserts that a mid-fade element is not reported.
+
+**Cost:** ~half a day. This precedes any new feature.
+
+---
+
 ## Phase 0.4 — Catalog with intent, not volume
 
 **Goal.** Grow the rule catalog by *what actually breaks AI-generated sites*,

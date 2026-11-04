@@ -13,10 +13,11 @@
       "mcp__lovable__list_messages",
       "mcp__lovable__list_edits",
       "mcp__lovable__get_project_knowledge",
-      "mcp__lovable__remix_project",
-      "mcp__lovable__send_message"
+      "mcp__lovable__remix_project"
     ],
-    "deny": []
+    "deny": [
+      "mcp__lovable__send_message"
+    ]
   },
   "deny": [
     "mcp__lovable__send_message",
