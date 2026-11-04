@@ -19,10 +19,10 @@
  * Exit: 0 all sites stable, 1 something drifted or failed, 2 usage error.
  */
 
-import { writeFile, mkdir } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { scanPage, closeBrowser, ScanError } from '../src/lib/scan.js';
+import { fileURLToPath } from 'node:url';
+import { closeBrowser, ScanError, scanPage } from '../src/lib/scan.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
@@ -59,9 +59,7 @@ async function main() {
   const runsIndex = args.indexOf('--runs');
   const runCount = runsIndex !== -1 ? Math.max(2, Number(args[runsIndex + 1] ?? 2)) : 2;
   const custom = args.filter((a) => !a.startsWith('--') && !/^\d+$/.test(a));
-  const sites = custom.length
-    ? custom.map((url) => ({ url, note: 'custom' }))
-    : DEFAULT_SITES;
+  const sites = custom.length ? custom.map((url) => ({ url, note: 'custom' })) : DEFAULT_SITES;
 
   console.log(`\n  Stage 1 gate — ${sites.length} sites × ${runCount} runs\n`);
 
@@ -117,7 +115,9 @@ async function main() {
   const totalRuns = results.reduce((n, r) => n + r.runs.length, 0);
   const totalMs = results.reduce((n, r) => n + r.runs.reduce((m, x) => m + x.durationMs, 0), 0);
 
-  console.log(`\n  ${results.length - failures.length}/${results.length} stable · ${totalRuns} scans · ${fmt(totalMs)} total`);
+  console.log(
+    `\n  ${results.length - failures.length}/${results.length} stable · ${totalRuns} scans · ${fmt(totalMs)} total`,
+  );
   if (failures.length) {
     console.log(`\n  GATE NOT PASSED — ${failures.length} site(s) failed or drifted:`);
     for (const f of failures) console.log(`    ${f.url}${f.error ? ` — ${f.error}` : ''}`);

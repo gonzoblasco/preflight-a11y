@@ -122,9 +122,7 @@ export async function scanPage(url: string, options: ScanOptions = {}): Promise<
       await settleVisuals(page);
 
       progress('analyzing');
-      const axe = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'])
-        .analyze();
+      const axe = await analyzeStable(page);
 
       progress('collecting signals');
       const signals = await collectSignals(page);
@@ -316,6 +314,58 @@ async function settleVisuals(page: import('playwright').Page, maxWaitMs = 4000):
     if (current === previous && current.length > 0) return;
     previous = current;
   }
+}
+
+/** The axe rule set we assert against. Named once so the re-read cannot drift. */
+const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
+
+function runAxe(page: import('playwright').Page) {
+  return new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+}
+
+/** Identity of a violation for comparison: the rule, plus its affected selectors. */
+function violationKey(v: { id: string; nodes: { target: (string | string[])[] }[] }): string {
+  const selectors = v.nodes.map((n) => n.target.map(String).join(' >>> ')).sort();
+  return `${v.id}::${selectors.join('|')}`;
+}
+
+/**
+ * Runs axe twice and reports only what survives both reads.
+ *
+ * Measured cause: `stripe.com` returned `region:1` on runs 1 and 3 but not 2 and
+ * 4. The drifting node was the cookie-consent banner, which mounts or unmounts
+ * depending on how fast the consent script resolves. No amount of waiting fixes
+ * that — the DOM genuinely has two states, and the scanner was reporting a
+ * snapshot as if it were the page.
+ *
+ * A finding that appears in one read and not the other is not evidence, so it is
+ * dropped and reported separately. This is the difference between "the page has
+ * this defect" and "the page had it for a moment".
+ */
+async function analyzeStable(page: import('playwright').Page) {
+  const first = await runAxe(page);
+  await page.waitForTimeout(900);
+  const second = await runAxe(page);
+
+  const secondKeys = new Set(second.violations.map(violationKey));
+  const firstKeys = new Set(first.violations.map(violationKey));
+
+  const stable = first.violations.filter((v) => secondKeys.has(violationKey(v)));
+  const unstable = first.violations
+    .filter((v) => !secondKeys.has(violationKey(v)))
+    .concat(second.violations.filter((v) => !firstKeys.has(violationKey(v))));
+
+  if (unstable.length > 0) {
+    // Visible in the log, never in the score. Silent dropping would be the same
+    // dishonesty as reporting it.
+    process.stderr.write(
+      `preflight: dropped ${unstable.length} transient finding(s): ${unstable
+        .map((v) => v.id)
+        .join(', ')}\n`,
+    );
+  }
+
+  return { ...first, violations: stable };
 }
 
 /**
