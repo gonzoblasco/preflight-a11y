@@ -163,6 +163,43 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
         <section>
           <h2>Signals</h2>
+
+          {/*
+            The named-control ratio is the fastest way for someone who does not
+            know what ARIA is to feel the problem: "most of your buttons have no
+            name" needs no vocabulary. It was buried in a definition list next to
+            the viewport value, which is why it sat unread.
+          */}
+          <div className="headline-metric">
+            <p className="headline-metric__value mono">{Math.round(signals.namedRatio * 100)}%</p>
+            <p className="headline-metric__label">
+              of this page&rsquo;s {signals.interactiveCount} interactive elements have a name a
+              screen reader can announce.
+              {signals.namedRatio < 1 && (
+                <>
+                  {' '}
+                  The other{' '}
+                  {Math.max(
+                    0,
+                    signals.interactiveCount -
+                      Math.round(signals.interactiveCount * signals.namedRatio),
+                  )}{' '}
+                  are announced as their role alone, with nothing to identify them.
+                </>
+              )}
+            </p>
+            <div
+              className="headline-metric__bar"
+              role="img"
+              aria-label={`${Math.round(signals.namedRatio * 100)} percent of interactive elements are named`}
+            >
+              <span
+                className="headline-metric__fill"
+                style={{ width: `${Math.round(signals.namedRatio * 100)}%` }}
+              />
+            </div>
+          </div>
+
           <dl className="signals-dl">
             <div>
               <dt className="signals-dt">Language</dt>
@@ -173,12 +210,16 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
               <dd className="signals-dd">{signals.viewport || 'Not detected'}</dd>
             </div>
             <div>
-              <dt className="signals-dt">Named Control Ratio</dt>
-              <dd className="signals-dd">{(signals.namedRatio * 100).toFixed(1)}%</dd>
+              <dt className="signals-dt">Interactive elements</dt>
+              <dd className="signals-dd">{signals.interactiveCount}</dd>
             </div>
             <div>
               <dt className="signals-dt">Images without alt</dt>
               <dd className="signals-dd">{signals.imagesWithoutAlt}</dd>
+            </div>
+            <div>
+              <dt className="signals-dt">Form fields without a label</dt>
+              <dd className="signals-dd">{signals.formsWithoutLabels}</dd>
             </div>
             <div>
               <dt className="signals-dt">Placeholder-only labels</dt>

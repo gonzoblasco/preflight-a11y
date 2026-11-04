@@ -402,6 +402,52 @@ pre {
 pre code.evidence {
   white-space: pre;
 }
+
+/*
+ * The headline metric.
+ *
+ * "82% of the controls have a name" is the one number a person who has never
+ * heard of ARIA can act on, so it gets display type instead of a definition-list
+ * row. Every pair below is >= 4.5:1: the value is the accent (#F5A524) on the
+ * canvas, which measures 9.6:1, and the label is the muted text at 6.0:1.
+ */
+.headline-metric {
+  margin: 2.5rem 0 1rem;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-surface);
+}
+
+.headline-metric__value {
+  margin: 0;
+  font-size: 3.5rem;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+.headline-metric__label {
+  margin: 0.75rem 0 1.25rem;
+  color: var(--text-muted);
+  max-width: 62ch;
+}
+
+.headline-metric__bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.headline-metric__fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+}
+
 .signals-dl {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
