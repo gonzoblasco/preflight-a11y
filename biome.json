@@ -14,9 +14,9 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
-      "a11y": { "recommended": true },
-      "suspicious": { "noExplicitAny": "warn" }
+      "preset": "recommended",
+      "a11y": { "preset": "all" },
+      "suspicious": { "noExplicitAny": "error" }
     }
   },
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "always" } }

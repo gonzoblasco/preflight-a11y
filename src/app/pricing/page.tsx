@@ -127,10 +127,13 @@ export default function PricingPage() {
             <CheckoutButton plan="agency" />
           </div>
         </div>
-        <p className="muted" style={{ maxWidth: '46rem', margin: '3rem auto 0', fontSize: '0.875rem' }}>
-          Preflight is at version 0.1.0. Billing is not connected yet: choosing a plan today
-          emails us and a credit is issued by hand. Everything listed on the Free tier works
-          now and is verified by scanning this site with itself.
+        <p
+          className="muted"
+          style={{ maxWidth: '46rem', margin: '3rem auto 0', fontSize: '0.875rem' }}
+        >
+          Preflight is at version 0.1.0. Billing is not connected yet: choosing a plan today emails
+          us and a credit is issued by hand. Everything listed on the Free tier works now and is
+          verified by scanning this site with itself.
         </p>
       </main>
     </div>
