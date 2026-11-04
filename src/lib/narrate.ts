@@ -104,11 +104,19 @@ export async function narrate(html: string, lang = 'en'): Promise<Narration> {
     const previous = {
       window: globalThis.window,
       document: globalThis.document,
+      CSS: (globalThis as unknown as { CSS?: unknown }).CSS,
     };
 
     // The driver reads the globals, not a parameter (its API contract).
     (globalThis as unknown as { window: unknown }).window = dom.window;
     (globalThis as unknown as { document: unknown }).document = dom.window.document;
+    // jsdom does not implement `CSS.escape`, and the reader calls it on any page
+    // with generated ids. Without this, a real site fails the whole scan with
+    // "CSS is not defined" — a driver gap, not a defect of the page.
+    (globalThis as unknown as { CSS: unknown }).CSS = dom.window.CSS ?? {
+      escape: (value: string) => String(value).replace(/([^\w-])/g, (char) => `\\${char}`),
+      supports: () => false,
+    };
     void lang;
 
     const phrases: string[] = [];
@@ -128,6 +136,7 @@ export async function narrate(html: string, lang = 'en'): Promise<Narration> {
       }
       (globalThis as unknown as { window: unknown }).window = previous.window;
       (globalThis as unknown as { document: unknown }).document = previous.document;
+      (globalThis as unknown as { CSS: unknown }).CSS = previous.CSS;
     }
 
     const gaps: NarrationGap[] = [];

@@ -19,6 +19,8 @@
 | Build | `next build` clean; `tsc --noEmit` clean |
 | Tests | `vitest run` → 8/8 pass |
 | CLI | `npx tsx scripts/cli.ts example.com` prints transcript + findings + prompt |
+| **Real-world scan** | `stripe.com` → 51/100 D, 2 blocking; findings verified by hand against the DOM. No false positives. |
+| **Bot-blocking handled** | `lovable.dev` returns 403; the scan fails with "The site returned HTTP 403. A public page is required." rather than a stack trace. |
 
 ## What is deliberately not done
 
