@@ -155,7 +155,13 @@ Adding a write tool would require an approval card on every call and destroy the
 
 ---
 
-## Phase 0.3.1 — Fix the flaky measurement (found by a real customer)
+## Phase 0.3.1 — Fix the flaky measurement (found by a real customer)  ✅ **DONE (2026-11-04)**
+
+> **Result:** entrance animations are frozen and visuals are sampled until stable.
+> 10/10 tests, including a regression that **fails on the old 600 ms wait** and
+> passes on the fix — verified both ways, not assumed.
+> Real sites unchanged: SoporteML 100/100, example.com 82/100. `stripe.com` moved
+> 51 → 54, because part of its "failures" were also mid-animation artefacts.
 
 **Goal.** Stop reporting contrast failures that exist only mid-animation.
 

@@ -112,6 +112,24 @@ describe('scanner', () => {
     await serve('bad.html', 500);
     await expect(scanPage(base)).rejects.toBeInstanceOf(ScanError);
   });
+
+  /**
+   * Regression for a false positive found on a live product (SoporteML): three
+   * chips with a correct settled colour failed contrast because the scanner
+   * sampled them mid-fade at ~52% opacity. The fixture reproduces that shape:
+   * a correct `#575e6b` behind a staggered 0.5s opacity animation.
+   */
+  it('does not report contrast failures caused by entrance animations', async () => {
+    await serve('animated.html');
+
+    // Three runs: a race would appear intermittently, which is the whole point.
+    for (let run = 1; run <= 3; run += 1) {
+      const result = await scanPage(base);
+      const contrast = result.findings.find((f) => f.id === 'color-contrast');
+      expect(contrast, `run ${run}: contrast reported on a settled page`).toBeUndefined();
+      expect(result.score.grade, `run ${run}`).toBe('A');
+    }
+  });
 });
 
 describe('scoring', () => {

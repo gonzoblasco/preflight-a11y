@@ -107,7 +107,19 @@ export async function scanPage(url: string, options: ScanOptions = {}): Promise<
 
       // Let hydration settle: scanning a skeleton produces false findings.
       await page.waitForLoadState('load', { timeout: 10_000 }).catch(() => undefined);
-      await page.waitForTimeout(600);
+
+      // Entrance animations are the single largest source of false positives we
+      // have measured. SoporteML (a real product) produced three "contrast
+      // failures" that were the page sampled mid-fade at 52% opacity. A fixed
+      // delay cannot fix that: it races the animation. Two measures, in order:
+      //
+      //   1. freeze animations at their end state (belt)
+      //   2. wait until two consecutive visual samples agree (suspenders)
+      //
+      // `reducedMotion: 'reduce'` alone is not enough because libraries such as
+      // framer-motion animate inline styles and never consult the media query.
+      await freezeAnimations(page);
+      await settleVisuals(page);
 
       progress('analyzing');
       const axe = await new AxeBuilder({ page })
@@ -232,6 +244,77 @@ export class ScanError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'ScanError';
+  }
+}
+
+/**
+ * Forces every animation and transition to its end state.
+ *
+ * Measured cause: a real product (SoporteML) failed three contrast checks because
+ * framer-motion staggers a 0.5s opacity fade on the hero chips. The scanner read
+ * them at ~52% opacity, which reproduces `#a3a7ae` from a correct `#575e6b`. The
+ * failure did not exist for any user who waited half a second.
+ *
+ * `reducedMotion: 'reduce'` is not sufficient: JS animation libraries write
+ * inline styles and ignore the media query entirely.
+ */
+async function freezeAnimations(page: import('playwright').Page): Promise<void> {
+  await page
+    .addStyleTag({
+      content: `
+        *, *::before, *::after {
+          animation-duration: 0s !important;
+          animation-delay: 0s !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0s !important;
+          transition-delay: 0s !important;
+        }
+      `,
+    })
+    .catch(() => undefined);
+
+  // Libraries can re-apply inline opacity after a stylesheet lands, so one frame
+  // is requested to let the cascade settle before sampling.
+  await page
+    .evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => r())))
+    .catch(() => undefined);
+}
+
+/**
+ * Waits until two consecutive visual samples agree.
+ *
+ * A fixed delay races the animation; this waits for it to stop. The sample is the
+ * page's scroll height plus the computed colour of every element that has text,
+ * which is exactly the signal contrast depends on.
+ */
+async function settleVisuals(page: import('playwright').Page, maxWaitMs = 4000): Promise<void> {
+  const sample = () =>
+    page
+      .evaluate(() => {
+        const parts: string[] = [String(document.documentElement.scrollHeight)];
+        const nodes = document.querySelectorAll<HTMLElement>('body *');
+        // Sampling every node would be slow on a large page; the first 300 are
+        // enough to detect a transition, and any element still animating later
+        // is caught by the second read of a failing node before reporting.
+        const limit = Math.min(nodes.length, 300);
+        for (let i = 0; i < limit; i += 1) {
+          const node = nodes[i];
+          if (!node || (node.textContent ?? '').trim().length === 0) continue;
+          const style = getComputedStyle(node);
+          parts.push(`${style.color}|${style.backgroundColor}|${style.opacity}`);
+        }
+        return parts.join(';');
+      })
+      .catch(() => '');
+
+  const deadline = Date.now() + maxWaitMs;
+  let previous = await sample();
+
+  while (Date.now() < deadline) {
+    await page.waitForTimeout(120);
+    const current = await sample();
+    if (current === previous && current.length > 0) return;
+    previous = current;
   }
 }
 
