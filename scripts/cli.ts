@@ -42,8 +42,9 @@ Options
   --out <file>         Write the report to a file.
   --no-transcript      Omit the screen-reader transcript from stdout.
   --no-prompt          Omit the fix prompt from stdout.
-  --allow-private      Permit localhost/private hosts. For local builds only;
-                       it is never the default and the API never honours it.
+  --public-only        Refuse localhost and private addresses. The CLI allows
+                       them by default because it runs on your own machine:
+                       blocking your own dev server protects nobody.
   -h, --help           This text.
 
 Exit codes
@@ -65,7 +66,11 @@ function parse(argv: string[]): Args {
     failOnBlocking: Boolean(process.env.CI),
     transcript: true,
     prompt: true,
-    allowPrivate: false,
+    // The SSRF guard exists to stop a *server* from being pointed at its own
+    // network by a stranger. In the CLI, the caller and the machine are the same
+    // person, so blocking localhost only hides the primary use case: scanning a
+    // page before it ships.
+    allowPrivate: true,
     help: false,
   };
 
@@ -91,8 +96,12 @@ function parse(argv: string[]): Args {
       case '--no-prompt':
         args.prompt = false;
         break;
+      // Kept so an existing script does not break; it is now the default.
       case '--allow-private':
         args.allowPrivate = true;
+        break;
+      case '--public-only':
+        args.allowPrivate = false;
         break;
       case '--out':
         args.out = argv[++i] ?? null;

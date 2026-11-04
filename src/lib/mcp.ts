@@ -64,6 +64,14 @@ function describe(error: unknown): string {
 export interface PreflightServerInfo {
   name: string;
   version: string;
+  /**
+   * Allow localhost and private addresses.
+   *
+   * True for stdio: the client and the machine are the same person, so scanning
+   * a dev server is the primary use case, not an attack.
+   * False for HTTP: a remote caller must never reach our internal network.
+   */
+  allowPrivate?: boolean;
 }
 
 /**
@@ -71,6 +79,7 @@ export interface PreflightServerInfo {
  * streamable HTTP for a remote client such as Lovable or v0.
  */
 export function createPreflightServer(info: PreflightServerInfo): McpServer {
+  const guardOptions = { allowPrivate: info.allowPrivate ?? false };
   const server = new McpServer(
     { name: info.name, version: info.version },
     {
@@ -98,7 +107,7 @@ export function createPreflightServer(info: PreflightServerInfo): McpServer {
       annotations: { ...READ_ONLY, title: 'Scan a page for accessibility defects' },
     },
     async ({ url }) => {
-      const guard = await guardUrl(url);
+      const guard = await guardUrl(url, guardOptions);
       if (!guard.ok || !guard.url) return failure(guard.reason ?? 'That URL cannot be scanned.');
 
       try {
@@ -207,7 +216,7 @@ export function createPreflightServer(info: PreflightServerInfo): McpServer {
       annotations: { ...READ_ONLY, title: 'Get a repair prompt an AI builder can execute' },
     },
     async ({ url }) => {
-      const guard = await guardUrl(url);
+      const guard = await guardUrl(url, guardOptions);
       if (!guard.ok || !guard.url) return failure(guard.reason ?? 'That URL cannot be scanned.');
 
       try {

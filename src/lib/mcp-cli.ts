@@ -95,7 +95,11 @@ async function runHttp(): Promise<void> {
     // Stateless mode: every request creates its own transport and server.
     // Stateful sessions would pin a browser context to a client that may never
     // return, and the scan is stateless by nature.
-    const server = createPreflightServer({ name: 'preflight', version: VERSION });
+    const server = createPreflightServer({
+      name: 'preflight',
+      version: VERSION,
+      allowPrivate: false,
+    });
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     await server.connect(transport);
 
@@ -125,7 +129,9 @@ async function runHttp(): Promise<void> {
 }
 
 async function runStdio(): Promise<void> {
-  const server = createPreflightServer({ name: 'preflight', version: VERSION });
+  // Local agents run on the same machine as the developer: scanning localhost is
+  // the primary use case, not an attack surface.
+  const server = createPreflightServer({ name: 'preflight', version: VERSION, allowPrivate: true });
   const transport = new StdioServerTransport();
   await server.connect(transport);
 

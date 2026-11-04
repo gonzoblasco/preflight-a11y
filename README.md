@@ -48,6 +48,22 @@ npx preflight-a11y https://your-site.com --markdown --out report.md
 npx preflight-a11y https://your-site.com --json
 ```
 
+### Scan what you are building, not what you shipped
+
+The CLI accepts `localhost` and private addresses **by default**, because the
+person running it and the machine being scanned are the same. Blocking your own
+dev server protects nobody.
+
+```bash
+npm run dev                              # your app on :3000
+npx preflight-a11y http://localhost:3000  # scan it while you work
+```
+
+That is the difference between a gate you run once at launch and one you run on
+every change. The guard exists for the hosted server, where a stranger's URL must
+never reach our network — so the remote MCP and the API refuse private hosts, and
+the CLI does not. Pass `--public-only` if you want the strict behaviour locally.
+
 Exit codes are the point: `0` pass, `1` gate failed, `2` scan error. Drop it in CI
 and a pull request that ships an unusable button stops being merged.
 
