@@ -109,7 +109,7 @@ export async function scanPage(url: string, options: ScanOptions = {}): Promise<
       await page.waitForLoadState('load', { timeout: 10_000 }).catch(() => undefined);
 
       // Entrance animations are the single largest source of false positives we
-      // have measured. SoporteML (a real product) produced three "contrast
+      // have measured. A live product (a React SPA with entrance animations) produced three "contrast
       // failures" that were the page sampled mid-fade at 52% opacity. A fixed
       // delay cannot fix that: it races the animation. Two measures, in order:
       //
@@ -250,7 +250,7 @@ export class ScanError extends Error {
 /**
  * Forces every animation and transition to its end state.
  *
- * Measured cause: a real product (SoporteML) failed three contrast checks because
+ * Measured cause: a live React SPA failed three contrast checks because
  * framer-motion staggers a 0.5s opacity fade on the hero chips. The scanner read
  * them at ~52% opacity, which reproduces `#a3a7ae` from a correct `#575e6b`. The
  * failure did not exist for any user who waited half a second.

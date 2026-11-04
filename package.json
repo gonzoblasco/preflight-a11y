@@ -1,10 +1,33 @@
 {
-  "name": "preflight",
-  "version": "0.1.0",
-  "private": true,
+  "name": "preflight-a11y",
+  "version": "0.2.0",
+  "private": false,
   "type": "module",
   "description": "The pre-launch gate for AI-built websites: what a screen reader actually announces, and the fix prompt your builder can execute.",
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "screen-reader",
+    "wcag",
+    "axe",
+    "ci",
+    "ai",
+    "lovable",
+    "cursor"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gonzoblasco/preflight.git"
+  },
+  "bin": {
+    "preflight": "./scripts/cli.js"
+  },
+  "files": [
+    "scripts/cli.js",
+    "src/lib",
+    "action.yml"
+  ],
   "scripts": {
     "dev": "next dev -p 4317",
     "build": "next build",
@@ -12,7 +35,8 @@
     "test": "vitest run",
     "lint": "biome check",
     "format": "biome format --write",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "cli": "tsx scripts/cli.ts"
   },
   "dependencies": {
     "@axe-core/playwright": "4.14.0",
@@ -32,6 +56,7 @@
     "@types/node": "24.10.1",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vitest": "4.0.8"
   },

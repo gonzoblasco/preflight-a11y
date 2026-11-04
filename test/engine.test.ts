@@ -114,7 +114,7 @@ describe('scanner', () => {
   });
 
   /**
-   * Regression for a false positive found on a live product (SoporteML): three
+   * Regression for a false positive found on a live product: three
    * chips with a correct settled colour failed contrast because the scanner
    * sampled them mid-fade at ~52% opacity. The fixture reproduces that shape:
    * a correct `#575e6b` behind a staggered 0.5s opacity animation.
