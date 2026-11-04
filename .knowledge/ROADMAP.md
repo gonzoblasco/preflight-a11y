@@ -5,6 +5,13 @@
 **Current version:** 0.1.0 (cycle closed, audited)
 **Next cycle:** 0.2.0
 
+> **Product shape (2026-11-04):** one engine, every surface. CLI, GitHub Action,
+> web report, local MCP, remote MCP, REST API and an embeddable badge are all
+> first-class, all from the same framework-free engine. See
+> `.knowledge/ARCHITECTURE.md`. A phase that unlocks one surface must not break
+> another; the standing check is *"does the CLI still work with no account, and
+> does the remote MCP still answer in under 10s?"*
+
 > This is a gate document, not a wish list. Every phase has an **exit gate** that
 > must be demonstrated, and every phase has a **kill criterion** — the condition
 > under which the work stops and the product pivots or dies. A roadmap without
@@ -116,11 +123,21 @@ that is a product decision that now doubles as the connector's security boundary
 Adding a write tool would require an approval card on every call and destroy the
 "runs without asking" property that makes the integration useful.
 
+### Built already (2026-11-04)
+
+- `src/lib/mcp.ts` — five read-only tools with `readOnlyHint` annotations:
+  `scan_url`, `read_announcements`, `assert_announcement`, `get_fix_prompt`,
+  `explain_rule`.
+- `src/lib/mcp-cli.ts` — one entry, two transports: `--stdio` and `--http`.
+- Verified end to end through an in-memory MCP client: tools list with
+  `ro=true`, `read_announcements` finds the nameless image and button,
+  `scan_url` returns a real score, and the SSRF guard rejects loopback inside
+  the tool call.
+
 ### Work
 
-1. **Transport.** MCP over streamable HTTP (not stdio): a remote server must be
-   reachable by URL. Reuse the tool contract from `kanam-fixer`'s existing
-   `createKanamFixerServer` rather than designing a second one.
+1. **Transport.** Done for HTTP (stateless, one transport per request). Verify it
+   against a real remote client, not only the in-memory pair.
 2. **Hosting.** Container with a persistent Chromium (Fly/Railway). Serverless is
    ruled out by the 60s cap and the browser requirement — decide with measurements.
 3. **Auth.** Bearer token per customer, checked against the `licenses` table that
@@ -137,6 +154,10 @@ Adding a write tool would require an approval card on every call and destroy the
 
 - A real Lovable chat calls `scan_url` against a preview URL and gets a score,
   **with no approval card**, in under 10s.
+- The **REST API** exposes the same engine at `/api/v1/scan` with an API key, so
+  partners are not forced through MCP.
+- The **embeddable badge** (`/badge/<scan-id>.svg`) renders a live score for a
+  README or docs page. Small, but it is the only surface that markets itself.
 - `read_announcements` returns the same transcript the web report shows.
 - A second concurrent call does not contaminate the first (the narration lock).
 - Token auth rejects an unauthenticated call with a readable error.
