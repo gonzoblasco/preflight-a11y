@@ -10,9 +10,9 @@
  * change of the engine without a migration.
  */
 
-import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import type { ScanResult } from './types';
 
 const DB_PATH = process.env.PREFLIGHT_DB ?? join(process.cwd(), 'data', 'preflight.db');
@@ -100,7 +100,14 @@ export function recentScans(limit = 8): ScanSummary[] {
     .prepare(
       `SELECT id, url, created_at, score, grade, blocking FROM scans ORDER BY created_at DESC LIMIT ?`,
     )
-    .all(limit) as { id: string; url: string; created_at: string; score: number; grade: string; blocking: number }[];
+    .all(limit) as {
+    id: string;
+    url: string;
+    created_at: string;
+    score: number;
+    grade: string;
+    blocking: number;
+  }[];
 
   return rows.map((r) => ({
     id: r.id,

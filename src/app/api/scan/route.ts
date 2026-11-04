@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { guardUrl } from '@/lib/url-guard';
-import { checkQuota, fingerprint, recordUsage } from '@/lib/ratelimit';
-import { scanPage, ScanError } from '@/lib/scan';
 import { saveScan } from '@/lib/db';
+import { checkQuota, fingerprint, recordUsage } from '@/lib/ratelimit';
+import { ScanError, scanPage } from '@/lib/scan';
+import { guardUrl } from '@/lib/url-guard';
 
 // The scanner drives a real browser; it must run in Node, never in an edge runtime.
 export const runtime = 'nodejs';
@@ -23,7 +23,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Send a JSON body with a "url" field.' }, { status: 400 });
   }
 
-  const rawUrl = typeof body === 'object' && body !== null ? (body as { url?: unknown }).url : undefined;
+  const rawUrl =
+    typeof body === 'object' && body !== null ? (body as { url?: unknown }).url : undefined;
   if (typeof rawUrl !== 'string' || rawUrl.trim().length === 0) {
     return NextResponse.json({ error: 'Enter a URL to scan.' }, { status: 400 });
   }
@@ -44,7 +45,10 @@ export async function POST(request: Request) {
 
   const guard = await guardUrl(rawUrl);
   if (!guard.ok || !guard.url) {
-    return NextResponse.json({ error: guard.reason ?? 'That URL cannot be scanned.' }, { status: 400 });
+    return NextResponse.json(
+      { error: guard.reason ?? 'That URL cannot be scanned.' },
+      { status: 400 },
+    );
   }
 
   // A scan costs a browser context. Never start one the quota will not pay for.
@@ -66,7 +70,10 @@ export async function POST(request: Request) {
     }
     console.error('[preflight] scan failed', error);
     return NextResponse.json(
-      { error: 'The scan failed for an unexpected reason. The site may be blocking automated visits.' },
+      {
+        error:
+          'The scan failed for an unexpected reason. The site may be blocking automated visits.',
+      },
       { status: 500 },
     );
   }

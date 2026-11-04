@@ -15,16 +15,16 @@ export default function CheckoutClient({ plan }: { plan: 'pro' | 'agency' }) {
       }
 
       if (!res.ok) throw new Error('Payment failed');
-      
+
       const { url } = await res.json();
       window.location.href = url;
-    } catch (e) {
+    } catch {
       window.location.href = `mailto:hello@kanam.studio?subject=Upgrade to ${plan}`;
     }
   }
 
   return (
-    <button onClick={handleCheckout} style={{ width: '100%', display: 'block' }}>
+    <button type="button" onClick={handleCheckout} style={{ width: '100%', display: 'block' }}>
       Upgrade to {plan === 'pro' ? 'Pro' : 'Agency'}
     </button>
   );

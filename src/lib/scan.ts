@@ -10,18 +10,13 @@
  *  - Timeouts are hard: a scan that hangs must fail visibly, not eat a worker.
  */
 
-import { chromium, type Browser } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
-import type {
-  AxeImpact,
-  Finding,
-  PageSignals,
-  ScanResult,
-} from './types';
-import { fallbackCopy, RULES, type StepDraft } from './rules';
-import { narrate } from './narrate';
-import { scoreFindings } from './score';
+import { type Browser, chromium } from 'playwright';
 import { buildFixPrompt, inferTarget } from './fix-prompt';
+import { narrate } from './narrate';
+import { fallbackCopy, RULES, type StepDraft } from './rules';
+import { scoreFindings } from './score';
+import type { AxeImpact, Finding, PageSignals, ScanResult } from './types';
 
 const NAV_TIMEOUT_MS = 20_000;
 const TOTAL_BUDGET_MS = 45_000;
@@ -105,7 +100,9 @@ export async function scanPage(url: string, options: ScanOptions = {}): Promise<
 
       if (!response) throw new ScanError('The site did not respond. Check the URL and try again.');
       if (response.status() >= 400) {
-        throw new ScanError(`The site returned HTTP ${response.status()}. A public page is required.`);
+        throw new ScanError(
+          `The site returned HTTP ${response.status()}. A public page is required.`,
+        );
       }
 
       // Let hydration settle: scanning a skeleton produces false findings.
@@ -163,7 +160,10 @@ export async function scanPage(url: string, options: ScanOptions = {}): Promise<
           steps.push({
             finding,
             nodeIndex,
-            draft: { ...draft, target: draft.target === node.selector ? inferTarget(node.selector) : draft.target },
+            draft: {
+              ...draft,
+              target: draft.target === node.selector ? inferTarget(node.selector) : draft.target,
+            },
           });
         });
       }
@@ -188,7 +188,7 @@ export async function scanPage(url: string, options: ScanOptions = {}): Promise<
         findings: findings.sort(
           (a, b) =>
             ({ critical: 0, serious: 1, moderate: 2, minor: 3 })[a.impact] -
-            ({ critical: 0, serious: 1, moderate: 2, minor: 3 })[b.impact],
+            { critical: 0, serious: 1, moderate: 2, minor: 3 }[b.impact],
         ),
         narration,
         signals,
@@ -277,14 +277,14 @@ async function collectSignals(page: import('playwright').Page): Promise<PageSign
 
     const firstFocusable = document.querySelector<HTMLElement>('a[href]');
     const hasSkipLink = Boolean(
-      firstFocusable && /skip|jump/i.test(firstFocusable.textContent ?? '') &&
+      firstFocusable &&
+        /skip|jump/i.test(firstFocusable.textContent ?? '') &&
         firstFocusable.getBoundingClientRect().height > 0,
     );
 
     return {
       lang: document.documentElement.getAttribute('lang'),
-      viewport:
-        document.querySelector('meta[name="viewport"]')?.getAttribute('content') ?? null,
+      viewport: document.querySelector('meta[name="viewport"]')?.getAttribute('content') ?? null,
       headingOutline: headings,
       interactiveCount: interactive.length,
       namedRatio: interactive.length === 0 ? 1 : named / interactive.length,

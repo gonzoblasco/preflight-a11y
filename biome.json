@@ -1,6 +1,15 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
-  "files": { "includes": ["src/**", "scripts/**", "test/**"] },
+  "files": {
+    "includes": ["src/**", "scripts/**", "test/**"],
+    "ignoreUnknown": true
+  },
+  "overrides": [
+    {
+      "includes": ["test/fixtures/**"],
+      "linter": { "enabled": false }
+    }
+  ],
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
   "linter": {
     "enabled": true,

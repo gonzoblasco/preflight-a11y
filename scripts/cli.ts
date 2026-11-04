@@ -11,9 +11,9 @@
  */
 
 import { writeFile } from 'node:fs/promises';
-import { guardUrl } from '../src/lib/url-guard';
-import { scanPage, ScanError, closeBrowser } from '../src/lib/scan';
+import { closeBrowser, ScanError, scanPage } from '../src/lib/scan';
 import { verdict } from '../src/lib/score';
+import { guardUrl } from '../src/lib/url-guard';
 
 interface Args {
   url: string | null;
@@ -134,16 +134,22 @@ function printHuman(result: Awaited<ReturnType<typeof scanPage>>, args: Args): v
   console.log(`  ${c.bold(result.title)}`);
   console.log(`  ${c.dim(result.finalUrl)}`);
   console.log('');
-  console.log(`  ${paint(`${result.score.value}/100  ${result.score.grade}`)}  ${verdict(result.score)}`);
+  console.log(
+    `  ${paint(`${result.score.value}/100  ${result.score.grade}`)}  ${verdict(result.score)}`,
+  );
   console.log('');
 
   if (args.transcript) {
-    console.log(`  ${c.bold('WHAT A SCREEN READER SAYS')}  ${c.dim(`(${result.narration.matrix.reader} ${result.narration.matrix.version})`)}`);
+    console.log(
+      `  ${c.bold('WHAT A SCREEN READER SAYS')}  ${c.dim(`(${result.narration.matrix.reader} ${result.narration.matrix.version})`)}`,
+    );
     const gapAt = new Map(result.narration.gaps.map((g) => [g.at, g]));
     result.narration.phrases.slice(0, 60).forEach((phrase, index) => {
       const gap = gapAt.get(index);
       if (gap) {
-        console.log(`  ${c.red('!')} ${c.dim(String(index + 1).padStart(3))}  ${phrase}  ${c.dim(`← ${gap.hears}`)}`);
+        console.log(
+          `  ${c.red('!')} ${c.dim(String(index + 1).padStart(3))}  ${phrase}  ${c.dim(`← ${gap.hears}`)}`,
+        );
       } else {
         console.log(`    ${c.dim(String(index + 1).padStart(3))}  ${phrase}`);
       }
@@ -157,8 +163,11 @@ function printHuman(result: Awaited<ReturnType<typeof scanPage>>, args: Args): v
   if (result.findings.length > 0) {
     console.log(`  ${c.bold('FINDINGS')}`);
     for (const finding of result.findings) {
-      const paint2 = finding.impact === 'critical' || finding.impact === 'serious' ? c.red : c.yellow;
-      console.log(`  ${paint2(finding.impact.padEnd(8))} ${finding.title} ${c.dim(`(${finding.nodes.length}×)`)}`);
+      const paint2 =
+        finding.impact === 'critical' || finding.impact === 'serious' ? c.red : c.yellow;
+      console.log(
+        `  ${paint2(finding.impact.padEnd(8))} ${finding.title} ${c.dim(`(${finding.nodes.length}×)`)}`,
+      );
     }
     console.log('');
   }
@@ -268,7 +277,11 @@ async function main(): Promise<void> {
   }
 
   if (args.out) {
-    await writeFile(args.out, args.json ? output : args.markdown ? output : printMarkdown(result), 'utf8');
+    await writeFile(
+      args.out,
+      args.json ? output : args.markdown ? output : printMarkdown(result),
+      'utf8',
+    );
     console.error(`preflight: report written to ${args.out}`);
   }
 

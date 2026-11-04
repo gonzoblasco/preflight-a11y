@@ -10,8 +10,8 @@
  * serialized through a mutex. Two concurrent scans must not share a document.
  */
 
-import { JSDOM } from 'jsdom';
 import { virtual } from '@guidepup/virtual-screen-reader';
+import { JSDOM } from 'jsdom';
 import type { Narration, NarrationGap } from './types';
 
 const MAX_STEPS = 4000;
@@ -39,7 +39,11 @@ function isNoise(phrase: string): boolean {
   return /^listitem, level \d+, position \d+/.test(normalized);
 }
 
-/** Roles that, announced alone, mean the user heard no name at all. */
+/**
+ * Roles whose accessible name is *required* to act on them. A nameless list or
+ * region is normal markup, not a defect — flagging those would train the reader
+ * of the report to ignore the markers, which is worse than missing one.
+ */
 const ROLE_PHRASES = new Set([
   'image',
   'button',
@@ -56,12 +60,6 @@ const ROLE_PHRASES = new Set([
   'menuitem',
   'iframe',
   'frame',
-  'list',
-  'listitem',
-  'heading',
-  'graphic',
-  'region',
-  'dialog',
 ]);
 
 let queue: Promise<unknown> = Promise.resolve();
@@ -91,8 +89,6 @@ function describeGap(phrase: string): string {
     case 'iframe':
     case 'frame':
       return 'an embedded frame with no name — the user enters it blind';
-    case 'heading':
-      return 'a heading with no text — the outline has an empty entry';
     default:
       return `a ${phrase} with no name`;
   }

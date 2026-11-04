@@ -1,13 +1,13 @@
-import { createServer, type Server } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import { createServer, type Server } from 'node:http';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { closeBrowser, scanPage, ScanError } from '../src/lib/scan';
 import { buildFixPrompt } from '../src/lib/fix-prompt';
-import { scoreFindings } from '../src/lib/score';
-import { isPrivateAddress, guardUrl } from '../src/lib/url-guard';
 import { narrate } from '../src/lib/narrate';
+import { closeBrowser, ScanError, scanPage } from '../src/lib/scan';
+import { scoreFindings } from '../src/lib/score';
+import { guardUrl, isPrivateAddress } from '../src/lib/url-guard';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -41,7 +41,16 @@ afterAll(async () => {
 
 describe('url guard', () => {
   it('classifies private ranges, including IPv4-mapped v6', () => {
-    for (const ip of ['127.0.0.1', '10.1.2.3', '192.168.1.1', '172.16.0.1', '169.254.169.254', '::1', 'fd00::1', '::ffff:127.0.0.1']) {
+    for (const ip of [
+      '127.0.0.1',
+      '10.1.2.3',
+      '192.168.1.1',
+      '172.16.0.1',
+      '169.254.169.254',
+      '::1',
+      'fd00::1',
+      '::ffff:127.0.0.1',
+    ]) {
       expect(isPrivateAddress(ip), ip).toBe(true);
     }
     for (const ip of ['8.8.8.8', '1.1.1.1', '203.0.113.10']) {
@@ -65,6 +74,8 @@ describe('narration', () => {
     const roles = narration.gaps.map((g) => g.role);
     expect(roles).toContain('image');
     expect(roles).toContain('button');
+    // A nameless list is normal markup; it must not be reported as a gap.
+    expect(roles).not.toContain('list');
     expect(narration.gaps.every((g) => g.hears.length > 10)).toBe(true);
     expect(narration.phrases).toContain('heading, Ship faster, level 1');
     // Structural bookkeeping must not bury the signal.
@@ -124,10 +135,28 @@ describe('scoring', () => {
   it('caps the penalty for repeated nodes', () => {
     const node = { selector: 'img', html: '<img>' };
     const one = scoreFindings([
-      { id: 'image-alt', impact: 'critical', title: 'x', plainLanguage: 'x', wcag: [], nodes: [node], livedExperience: null, remediation: 'x' },
+      {
+        id: 'image-alt',
+        impact: 'critical',
+        title: 'x',
+        plainLanguage: 'x',
+        wcag: [],
+        nodes: [node],
+        livedExperience: null,
+        remediation: 'x',
+      },
     ]);
     const many = scoreFindings([
-      { id: 'image-alt', impact: 'critical', title: 'x', plainLanguage: 'x', wcag: [], nodes: Array(40).fill(node), livedExperience: null, remediation: 'x' },
+      {
+        id: 'image-alt',
+        impact: 'critical',
+        title: 'x',
+        plainLanguage: 'x',
+        wcag: [],
+        nodes: Array(40).fill(node),
+        livedExperience: null,
+        remediation: 'x',
+      },
     ]);
     expect(one.value - many.value).toBeLessThanOrEqual(72);
     expect(many.value).toBeGreaterThanOrEqual(0);
@@ -148,9 +177,24 @@ describe('fix prompt', () => {
     };
     const prompt = buildFixPrompt({
       url: 'https://example.com',
-      score: { value: 40, grade: 'F', blocking: 3, byImpact: { critical: 3, serious: 0, moderate: 0, minor: 0 } },
+      score: {
+        value: 40,
+        grade: 'F',
+        blocking: 3,
+        byImpact: { critical: 3, serious: 0, moderate: 0, minor: 0 },
+      },
       findings: [finding],
-      steps: [{ finding, nodeIndex: 0, draft: { target: 'the <header> region', instruction: 'Add alt.', acceptance: 'Reader says image, X.' } }],
+      steps: [
+        {
+          finding,
+          nodeIndex: 0,
+          draft: {
+            target: 'the <header> region',
+            instruction: 'Add alt.',
+            acceptance: 'Reader says image, X.',
+          },
+        },
+      ],
     });
     expect(prompt.steps).toHaveLength(1);
     expect(prompt.text).toContain('Current score: 40/100');

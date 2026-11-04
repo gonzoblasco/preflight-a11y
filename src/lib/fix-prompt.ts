@@ -12,8 +12,8 @@
  *      builder can verify its own work instead of guessing "looks good to me".
  */
 
-import type { Finding, FixPrompt, FixStep, Score } from './types';
 import { clip, type StepDraft } from './rules';
+import type { Finding, FixPrompt, FixStep, Score } from './types';
 
 const IMPACT_ORDER: Record<string, number> = { critical: 0, serious: 1, moderate: 2, minor: 3 };
 
@@ -81,7 +81,9 @@ export function buildFixPrompt(input: PromptInput): FixPrompt {
   for (const step of steps) {
     const finding = selected[step.order - 1]?.finding;
     lines.push(`## Step ${step.order} — ${finding?.title ?? ''}`);
-    lines.push(`Rule: ${finding?.id ?? ''} (${finding?.impact ?? ''}) · WCAG ${finding?.wcag.join(', ') || 'n/a'}`);
+    lines.push(
+      `Rule: ${finding?.id ?? ''} (${finding?.impact ?? ''}) · WCAG ${finding?.wcag.join(', ') || 'n/a'}`,
+    );
     lines.push(`Where: ${step.target}`);
     lines.push(`Selector: ${selected[step.order - 1]?.finding.nodes[0]?.selector ?? ''}`);
     if (finding?.nodes[0]?.html) {

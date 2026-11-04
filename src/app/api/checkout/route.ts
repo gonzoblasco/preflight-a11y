@@ -21,7 +21,8 @@ export async function POST(request: Request) {
   let plan: unknown;
   try {
     const body = await request.json();
-    plan = typeof body === 'object' && body !== null ? (body as { plan?: unknown }).plan : undefined;
+    plan =
+      typeof body === 'object' && body !== null ? (body as { plan?: unknown }).plan : undefined;
   } catch {
     return NextResponse.json({ error: 'Send {"plan":"pro"|"agency"}.' }, { status: 400 });
   }

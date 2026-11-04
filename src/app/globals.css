@@ -7,23 +7,25 @@
 */
 
 :root {
-  --bg-canvas: #0B0C0E;
-  --bg-surface: #16181B;
-  --bg-input: #1F2226;
-  
-  --accent: #F5A524;
-  --accent-muted: #C4881A;
-  
-  --text-main: #E8E8EA;
-  --text-muted: #8B8F98;
-  --text-on-accent: #0B0C0E;
-  
-  --border: #2D3136;
+  --bg-canvas: #0b0c0e;
+  --bg-surface: #16181b;
+  --bg-input: #1f2226;
+
+  --accent: #f5a524;
+  --accent-muted: #c4881a;
+
+  --text-main: #e8e8ea;
+  --text-muted: #8b8f98;
+  --text-on-accent: #0b0c0e;
+
+  --border: #2d3136;
   --border-focus: var(--accent);
-  
-  --font-mono: ui-monospace, SF Mono, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  
+
+  --font-mono:
+    ui-monospace, SF Mono, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
   --scale-display: 56px;
   --scale-h2: 32px;
   --scale-body: 16px;
@@ -232,11 +234,26 @@ button:disabled {
 
 /* Grade colors. Amber family for middling scores, red only when blocked.
    Every pair below is >= 4.5:1 against its own text color. */
-.badge-A { background: #1F4D22; color: #E8F5E9; }
-.badge-B { background: #2F5520; color: #EDF7E4; }
-.badge-C { background: #5C4A12; color: #FBE9B7; }
-.badge-D { background: #6B3A12; color: #FBE0C8; }
-.badge-F { background: #7A1B1B; color: #FBE0E0; }
+.badge-A {
+  background: #1f4d22;
+  color: #e8f5e9;
+}
+.badge-B {
+  background: #2f5520;
+  color: #edf7e4;
+}
+.badge-C {
+  background: #5c4a12;
+  color: #fbe9b7;
+}
+.badge-D {
+  background: #6b3a12;
+  color: #fbe0c8;
+}
+.badge-F {
+  background: #7a1b1b;
+  color: #fbe0e0;
+}
 
 .footer {
   margin-top: 5rem;
@@ -337,10 +354,22 @@ button:disabled {
   font-weight: 700;
 }
 
-.impact-critical { background: #B22222; color: #fff; }
-.impact-serious { background: #D97706; color: #fff; }
-.impact-moderate { background: #B45309; color: #fff; }
-.impact-minor { background: #4B5563; color: #fff; }
+.impact-critical {
+  background: #b22222;
+  color: #fff;
+}
+.impact-serious {
+  background: #d97706;
+  color: #fff;
+}
+.impact-moderate {
+  background: #b45309;
+  color: #fff;
+}
+.impact-minor {
+  background: #4b5563;
+  color: #fff;
+}
 
 .finding-content {
   padding: 0 1rem 1rem 1rem;
@@ -366,24 +395,34 @@ pre {
 
 .signals-dl {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem 2rem;
   margin: 2rem 0;
+}
+
+@media (max-width: 720px) {
+  .signals-dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .signals-dt {
   color: var(--text-muted);
   font-size: 0.875rem;
+  margin: 0 0 0.25rem;
 }
 
 .signals-dd {
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin: 0;
+  word-break: break-word;
 }
 
 @media (prefers-reduced-motion: reduce) {
   * {
+    /* biome-ignore lint/complexity/noImportantStyles: must beat component styles */
     animation: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must beat component styles */
     transition: none !important;
   }
 }

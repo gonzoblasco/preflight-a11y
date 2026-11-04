@@ -33,7 +33,11 @@ export function isPrivateAddress(ip: string): boolean {
   if (isIP(ip) === 6) {
     const normalized = ip.toLowerCase();
     if (normalized === '::1' || normalized === '::') return true;
-    if (normalized.startsWith('fe80') || normalized.startsWith('fc') || normalized.startsWith('fd')) {
+    if (
+      normalized.startsWith('fe80') ||
+      normalized.startsWith('fc') ||
+      normalized.startsWith('fd')
+    ) {
       return true;
     }
     // IPv4-mapped IPv6, e.g. ::ffff:127.0.0.1

@@ -1,8 +1,12 @@
+// A transcript and a node list are positional by definition: phrase 7 is the
+// seventh thing spoken, and two nodes of one rule can share a selector. Index
+// keys are the correct identity here, so the rule is disabled file-wide.
+// biome-ignore-all lint/suspicious/noArrayIndexKey: ordered evidence, not a list of entities
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import CopyButton from '@/components/CopyButton';
 import { getScan } from '@/lib/db';
 import { verdict } from '@/lib/score';
-import CopyButton from '@/components/CopyButton';
-import Link from 'next/link';
 
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -11,16 +15,21 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   if (!scan) notFound();
 
   const { score, narration, findings, signals, fixPrompt, limits } = scan;
-  
+
   // Grade Color Logic: Never green if blocking > 0
   const getGradeColor = (grade: string, blocking: number) => {
     if (blocking > 0) return 'badge-F';
     switch (grade) {
-      case 'A': return 'badge-A';
-      case 'B': return 'badge-B';
-      case 'C': return 'badge-C';
-      case 'D': return 'badge-D';
-      default: return 'badge-F';
+      case 'A':
+        return 'badge-A';
+      case 'B':
+        return 'badge-B';
+      case 'C':
+        return 'badge-C';
+      case 'D':
+        return 'badge-D';
+      default:
+        return 'badge-F';
     }
   };
 
@@ -28,7 +37,18 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
     <div className="container">
       <header className="header">
         <Link href="/" className="wordmark">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
             <path d="m12 14 4-4-4-4" />
             <path d="M3 10h18" />
             <path d="m12 10 4 4-4 4" />
@@ -51,19 +71,31 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
         <section>
           <h2>The Transcript</h2>
-          <p className="muted">This is exactly what is spoken by the screen reader, not necessarily what is in the DOM.</p>
+          <p className="muted">
+            This is exactly what is spoken by the screen reader, not necessarily what is in the DOM.
+          </p>
           <div className="transcript">
-            <p className="mono" style={{ fontSize: '0.875rem', marginBottom: '1rem', color: 'var(--text-muted)' }}>
+            <p
+              className="mono"
+              style={{ fontSize: '0.875rem', marginBottom: '1rem', color: 'var(--text-muted)' }}
+            >
               Read by {narration.matrix.reader} {narration.matrix.version} on {narration.matrix.os}
             </p>
             <ol className="transcript-list">
               {narration.phrases.map((phrase, i) => {
-                const gap = narration.gaps.find(g => g.at === i);
+                const gap = narration.gaps.find((g) => g.at === i);
                 return (
-                  <li key={i} className={`transcript-row ${gap ? 'transcript-gap' : ''}`}>
+                  <li
+                    key={`${phrase}-${i}`}
+                    className={`transcript-row ${gap ? 'transcript-gap' : ''}`}
+                  >
                     <span className="transcript-index">{i + 1}.</span>
                     <span>{phrase}</span>
-                    {gap && <span className="muted" style={{ fontSize: '0.75rem', marginLeft: 'auto' }}>{gap.hears}</span>}
+                    {gap && (
+                      <span className="muted" style={{ fontSize: '0.75rem', marginLeft: 'auto' }}>
+                        {gap.hears}
+                      </span>
+                    )}
                   </li>
                 );
               })}
@@ -86,16 +118,23 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                 </summary>
                 <div className="finding-content">
                   <p>{f.plainLanguage}</p>
-                  {f.livedExperience && (
-                    <blockquote>{f.livedExperience}</blockquote>
-                  )}
+                  {f.livedExperience && <blockquote>{f.livedExperience}</blockquote>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {f.nodes.map((node, ni) => (
-                      <div key={ni}>
-                        <div className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                      <div key={`${node.selector}-${ni}`}>
+                        <div
+                          className="mono"
+                          style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-muted)',
+                            marginBottom: '0.25rem',
+                          }}
+                        >
                           {node.selector}
                         </div>
-                        <pre><code>{node.html}</code></pre>
+                        <pre>
+                          <code>{node.html}</code>
+                        </pre>
                       </div>
                     ))}
                   </div>
@@ -107,12 +146,16 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
         <section style={{ marginTop: '3rem' }}>
           <h2>The Fix Prompt</h2>
-          <details style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '1rem' }}>
+          <details
+            style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '1rem' }}
+          >
             <summary style={{ cursor: 'pointer', fontWeight: 600, marginBottom: '1rem' }}>
               Show prompt for AI builder
             </summary>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <pre><code>{fixPrompt.text}</code></pre>
+              <pre>
+                <code>{fixPrompt.text}</code>
+              </pre>
               <CopyButton text={fixPrompt.text} />
             </div>
           </details>
@@ -131,7 +174,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             </div>
             <div>
               <dt className="signals-dt">Named Control Ratio</dt>
-              <dd className="signals-dd">{ (signals.namedRatio * 100).toFixed(1) }%</dd>
+              <dd className="signals-dd">{(signals.namedRatio * 100).toFixed(1)}%</dd>
             </div>
             <div>
               <dt className="signals-dt">Images without alt</dt>
@@ -146,28 +189,42 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
               <dd className="signals-dd">{signals.hasSkipLink ? 'Yes' : 'No'}</dd>
             </div>
           </dl>
-          
+
           <h3>Heading Outline</h3>
           <ul className="mono" style={{ listStyle: 'none', padding: 0 }}>
-            {signals.headingOutline.map((h, i) => (
-              <li key={i} style={{ marginLeft: `${(h.level - 1) * 1.5}rem`, marginBottom: '0.25rem' }}>
+            {signals.headingOutline.map((h) => (
+              <li
+                key={`${h.level}-${h.text}`}
+                style={{ marginLeft: `${(h.level - 1) * 1.5}rem`, marginBottom: '0.25rem' }}
+              >
                 <span className="muted">{h.level}.</span> {h.text}
               </li>
             ))}
           </ul>
         </section>
 
-        <section style={{ marginTop: '3rem', padding: '1.5rem', background: 'var(--bg-surface)', borderRadius: '8px' }}>
+        <section
+          style={{
+            marginTop: '3rem',
+            padding: '1.5rem',
+            background: 'var(--bg-surface)',
+            borderRadius: '8px',
+          }}
+        >
           <h2>What this scan cannot see</h2>
           <ul className="muted" style={{ fontSize: '0.875rem', lineHeight: '1.6' }}>
-            {limits.map((limit, i) => (
-              <li key={i} style={{ marginBottom: '0.5rem' }}>{limit}</li>
+            {limits.map((limit) => (
+              <li key={limit} style={{ marginBottom: '0.5rem' }}>
+                {limit}
+              </li>
             ))}
           </ul>
         </section>
 
         <div style={{ marginTop: '4rem', textAlign: 'center' }}>
-          <Link href="/" style={{ fontWeight: 600 }}>← Scan another page</Link>
+          <Link href="/" style={{ fontWeight: 600 }}>
+            ← Scan another page
+          </Link>
         </div>
       </main>
     </div>
