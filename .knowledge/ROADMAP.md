@@ -74,36 +74,84 @@ If this fails, 0.3–0.7 are wasted money.
 
 ---
 
-## Phase 0.3 — Cost, queue and the second user
+## Phase 0.3 — Preflight as a remote MCP server
 
-**Goal.** Make the scanner survive a stranger.
+**Goal.** Not "deploy it". **Ship Preflight as a remote MCP server that a builder
+can call**, so accessibility becomes a step in someone else's agent loop instead
+of a page someone remembers to visit.
 
-**Why.** The narration driver takes a process-global lock: one scan at a time
-per worker. Correct, but invisible. A visitor who waits 8 seconds behind another
-scan has no idea why, and a second concurrent user on one container is a
-correctness question nobody has answered.
+**Why this replaces the old 0.3.** The previous phase was deployment and
+concurrency — infrastructure with no customer. The MCP channel *is* the customer,
+and it imposes the same requirements (always up, bounded latency, safe under
+concurrency) as a byproduct rather than as its own project.
 
-**Work**
-1. Measure concurrency: 5 simultaneous scans against the API on a container.
-   Record p50/p95 latency and whether any narration result is contaminated
-   (two scans sharing one jsdom document would show crossed phrases).
-2. Make the wait visible: a queued state in the API response and in the UI copy.
-3. Decide the deployment target with measurements, not vibes:
-   - container with persistent Chromium (Fly/Railway) → expected winner
-   - serverless → document why it cannot host the scan route
-4. Document the real per-scan cost (CPU seconds, memory peak) so pricing is
-   grounded in a number.
+### The channel, verified against Lovable's docs (2026-11-04)
 
-**Exit gate**
-- 5 concurrent scans: no crossed narration, p95 under 20s, no OOM.
-- A written deployment decision with the measurements that justify it.
+| Fact | Value | Consequence |
+|---|---|---|
+| Plan required for custom MCP | **All plans** | No paywall on the channel itself. |
+| Auth supported | OAuth, **bearer token**, or none | A token-per-customer model is viable from day one. |
+| Reachability | Public URL | Needs a host with a persistent Chromium. |
+| Static IPs | Enterprise only, for firewalled servers | **Not needed.** We are public. |
+| **Read-only tools** | **Run with no approval card** | The whole design must be read-only tools. |
+| Scope | **Personal**, never part of the published app | Distribution is per-user, not per-project. |
+| Bulk discovery | **MCP registries** | The real distribution channel. |
 
-**Kill criterion**
-- If concurrency cannot exceed 1 per container without contamination, then the
-  product is a **local CLI tool** first and a SaaS second. That is a legitimate
-  outcome and changes the pricing page, not the engine.
+**The last two lines are the strategy.** A connector is not viral through a
+project; it is discovered through a registry. Publishing to the registries each
+builder reads is worth more than ten integrations written by hand.
 
-**Cost:** ~half a day, mostly waiting on load tests.
+### Tools (all read-only — non-negotiable)
+
+| Tool | Input | Returns | Why it exists |
+|---|---|---|---|
+| `scan_url` | `url` | score, grade, blocking count, findings (id, impact, plain language, lived experience) | The gate. What an agent calls when a build finishes. |
+| `read_announcements` | `url` or `html` | the phrase log + gaps with plain-language readings | The moat, exposed as a tool. No competitor has this. |
+| `assert_announcement` | `html`, expected phrases | pass/fail + what was actually announced | The `kanam-fixer` contract, reachable by any agent. |
+| `get_fix_prompt` | `url` | the ordered prompt with acceptance lines | The repair handoff. |
+| `explain_rule` | `rule id` | plain language, lived experience, remediation | Cheap, cacheable, makes the agent smarter mid-conversation. |
+
+**No tool writes to the customer's project.** Preflight never edits the page —
+that is a product decision that now doubles as the connector's security boundary.
+Adding a write tool would require an approval card on every call and destroy the
+"runs without asking" property that makes the integration useful.
+
+### Work
+
+1. **Transport.** MCP over streamable HTTP (not stdio): a remote server must be
+   reachable by URL. Reuse the tool contract from `kanam-fixer`'s existing
+   `createKanamFixerServer` rather than designing a second one.
+2. **Hosting.** Container with a persistent Chromium (Fly/Railway). Serverless is
+   ruled out by the 60s cap and the browser requirement — decide with measurements.
+3. **Auth.** Bearer token per customer, checked against the `licenses` table that
+   already exists. `401` with a clear message when absent.
+4. **Quota.** Per-token scans/month tied to the plan, replacing IP fingerprints.
+   The current burst limiter stays as a second layer.
+5. **Read-only marking.** Every tool must be flagged read-only in its MCP
+   descriptor so Lovable skips the approval card. Verify this in the client, not
+   in the docs.
+6. **Latency budget.** p95 under 10s for `scan_url` on a typical landing page.
+   A tool that blocks a build for 45s will be removed by the user.
+
+### Exit gate
+
+- A real Lovable chat calls `scan_url` against a preview URL and gets a score,
+  **with no approval card**, in under 10s.
+- `read_announcements` returns the same transcript the web report shows.
+- A second concurrent call does not contaminate the first (the narration lock).
+- Token auth rejects an unauthenticated call with a readable error.
+
+### Kill criterion
+
+- If p95 exceeds 20s on a container, the MCP channel is wrong for this product
+  and it stays a web tool + CLI. A slow tool inside someone's build loop is worse
+  than no tool.
+- If read-only marking is ignored by the client and every call needs approval,
+  the integration is dead on arrival regardless of quality.
+
+### Cost
+
+~2 days: 1 for transport + host, 1 for auth/quota and the read-only verification.
 
 ---
 
@@ -209,9 +257,9 @@ someone wants to pay. Building it early creates the illusion of progress.
 ## Sequencing, in one line
 
 ```
-0.2 (prove the claim)  ──gate──►  0.3 (survive strangers)  ──►  0.4 (catalog)
-                                      │
-                                      └──►  0.6 (signals)
+0.2 (prove the claim) ✅ ──gate──►  0.3 (MCP server)  ──►  0.4 (catalog)
+                                       │
+                                       └──►  0.6 (signals)
 0.5 (honesty in copy) runs in parallel with 0.4 — it is copy, not code
 0.7 (money) starts only after 0.2 AND 0.3 are green
 ```
@@ -230,6 +278,7 @@ someone wants to pay. Building it early creates the illusion of progress.
 | AI-generated explanations per finding | The catalog is hand-written on purpose: a model inventing copy about a rule it cannot see is how trust dies. |
 | Accounts, teams, SSO | Nobody has asked. Build when a payer asks. |
 | A Chrome extension | Different distribution physics. Only if the CLI stalls. |
+| Write tools in the MCP (fix the customer's code) | Breaks the read-only property that lets Lovable call us without an approval card, and makes us responsible for their code. |
 
 ---
 

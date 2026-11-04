@@ -124,7 +124,13 @@ export const RULES: Record<string, RuleCopy> = {
           "Change the text or background colour of THIS rule, not the element's markup. " +
           (facts.length ? `Measured: ${facts.join(', ')}. ` : '') +
           'Reach at least 4.5:1 for body text (3:1 for 24px+, or 19px+ bold), then verify.',
-        snippet: fg && bg ? `color: #1a1a1a;      /* was ${fg} on ${bg} */` : undefined,
+        // No fixed hex here: for a brand colour, flattening it to near-black is
+        // a brand change disguised as a fix. The instruction above carries the
+        // measured facts; the builder must choose a value in the same hue.
+        snippet:
+          fg && bg
+            ? `/* was ${fg} on ${bg} — pick a value of the same hue that reaches the target ratio */`
+            : undefined,
         acceptance: 'Re-run Preflight: the contrast rule reports no failing elements on this page.',
       };
     },
@@ -181,7 +187,7 @@ export const RULES: Record<string, RuleCopy> = {
       'A user pressing the heading shortcut gets nothing, or starts at level 2 with no idea what came before. The page has no title in its outline.',
     remediation: 'Add exactly one h1 that names the page.',
     fix: () => ({
-      target: 'app/page.tsx',
+      target: 'the page component that renders this view',
       instruction:
         'Add one <h1> that states what this page is. Other section titles become <h2>. Keep the visual size with CSS.',
       snippet: `<h1 class="text-5xl">Ship faster</h1>`,
@@ -211,7 +217,7 @@ export const RULES: Record<string, RuleCopy> = {
       'The user cannot jump past the navigation. On every page they re-listen to the same menu before reaching the content.',
     remediation: 'Wrap the primary content in a single <main>.',
     fix: () => ({
-      target: 'app/page.tsx',
+      target: 'the layout or page component wrapping this content',
       instruction:
         'Wrap the page content in one <main> element. Navigation and footer stay outside it.',
       snippet: `<main id="content">…</main>`,
