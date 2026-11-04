@@ -27,12 +27,15 @@
 | Narration works | 39 phrases recorded on the landing page, gaps annotated per role |
 | Repair loop works **against local models** | 97/100 mean, 95.8% closed, 0 regressions, 3 model families |
 | The product audits itself | landing 100/100 A · report 97/100 A |
-| Test suite | 9/9 |
-| Cost per scan | ~1.6–2.0s wall clock, one browser context |
-| **Not validated** | Lovable / Cursor / v0 as *actual editors* |
-| **Not built** | accounts, billing, PDF, deploy, crawl |
+| Test suite | 10/10 |
+| Cost per scan | ~1.8–5.8s wall clock, one browser context |
+| **Validated in a real builder** | ✅ Lovable, 49 F → 100 A on a live product (SoporteML) |
+| **Still unvalidated** | v0 by name |
+| **Built** | CLI, GitHub Action, web report, local MCP, remote MCP (stdio + HTTP) |
+| **Not built** | accounts, billing, PDF export, deploy, embeddable badge |
 
-**The honest one-liner:** an excellent engine with an unproven sales claim.
+**The honest one-liner:** a working engine with proven repair, delivered through
+every local surface; what remains is hosting the remote one and charging for it.
 
 ---
 
@@ -284,12 +287,10 @@ already paid for.
 
 ---
 
-## Phase 0.7 — Revenue plumbing (only after 0.2 passes)
+## Phase 0.7 — Revenue plumbing → **folded into Stage 3 / Phase 0.9**
 
-**Goal.** Take money without lying about what is built.
-
-**Why last.** Billing is the easiest thing to build and the least useful until
-someone wants to pay. Building it early creates the illusion of progress.
+Kept as a reference for the payment mechanics, not as a separate phase. Selling
+before Stage 1 is green is the failure mode this ordering exists to prevent.
 
 **Work**
 1. Deploy per the 0.3 decision.
@@ -309,17 +310,109 @@ someone wants to pay. Building it early creates the illusion of progress.
 
 ---
 
-## Sequencing, in one line
+## Three stages, in order
 
-```
-0.2 (prove the claim) ✅ ──gate──►  0.3 (MCP server)  ──►  0.4 (catalog)
-                                       │
-                                       └──►  0.6 (signals)
-0.5 (honesty in copy) runs in parallel with 0.4 — it is copy, not code
-0.7 (money) starts only after 0.2 AND 0.3 are green
-```
+The product is delivered in three stages, and **each stage must be finished before
+the next one starts**. The reason is not caution: each later surface inherits its
+credibility from the earlier one. A remote MCP that calls a flaky local engine is
+worse than no MCP, and a paid dashboard on top of an unproven gate is a refund.
+
+### Stage 1 — Local, perfect  ← **we are here**
+
+> *"The tool a developer keeps because it never lies."*
+
+Everything that runs on the user's machine, with no account, no network, no
+billing. This is the stage that has to be **boringly reliable**, because it is the
+only stage we can verify end to end without anything external depending on us.
+
+| Surface | State | What "perfect" means |
+|---|---|---|
+| CLI | built | Any URL, any page size, deterministic score, honest error on every failure mode |
+| GitHub Action | built | Fails a PR on a blocking defect, posts a readable summary |
+| Local MCP (stdio) | built | Five read-only tools, works inside Claude Code / OpenClaw |
+| Engine accuracy | 0.3.1 done | No false positives from animations; no missed blocking defect on the fixtures |
+
+**Gate to leave Stage 1:** the CLI and local MCP run ten real sites in a row with
+no crash, no timeout, and no finding that changes between two runs. A false
+positive on a live site is a Stage 1 failure, not a Stage 2 one.
+
+---
+
+### Stage 2 — Remote MCP
+
+> *"The gate inside someone else's build loop."*
+
+Only starts when Stage 1 is stable. The remote surface adds what local cannot:
+reachability from Lovable, v0 and Cursor without the user installing anything.
+
+| Work | Why it belongs to this stage |
+|---|---|
+| Container with a persistent Chromium | Stage 1 proves the engine; this proves it *serves* |
+| Bearer token + per-token quota | Remote compute is ours, so it is metered |
+| Read-only verification in a real client | The approval-card property must be observed, not assumed |
+| p95 under 10s on a typical landing page | A slow tool inside a build loop gets removed |
+
+**Gate to leave Stage 2:** a real Lovable chat calls `scan_url` on a preview URL,
+gets a score in under 10s, and shows no approval card.
+
+---
+
+### Stage 3 — The subscription product
+
+> *"The place a team goes when accessibility becomes someone's job."*
+
+This is the SaaS the product is built for, and it is deliberately last: it is the
+stage where money changes hands, and selling before the gate is proven is how a
+tool gets one star and no second customer.
+
+**What the paid product contains, as stated by the owner (2026-11-04):**
+
+| Piece | Free | Paid |
+|---|---|---|
+| CLI + GitHub Action | ✅ unlimited | — |
+| Local MCP | ✅ unlimited | — |
+| Scans, dashboard, history | 8/day, no account | unlimited + history |
+| **Reports** | the report a scan produces | saved, branded, exportable PDF |
+| **Accessibility resources** | — | a curated library: WCAG explained for the person who ships, patterns, checklists |
+| **AI assistant for questions** | — | ask about a finding, a rule, a pattern; grounded in the same catalog the engine uses |
+| Remote MCP | N scans/month per token | metered by plan |
+| REST API | — | per-key quota |
+| Agency | — | 25 client reports, white-label |
+
+**The AI assistant is a Stage 3 feature on purpose.** It answers questions about
+the catalog the engine already owns — it never invents a finding. That constraint
+is what keeps it from becoming the thing that destroys trust in the product.
+
+**Work**
+1. Accounts: email + license code. No passwords, no teams, until a payer asks.
+2. Stripe: Checkout, webhook, license row.
+3. Dashboard: scan history, saved reports, PDF export.
+4. Resources library: hand-written, one page per rule, cited to WCAG.
+5. AI assistant: RAG over the rule catalog + resources, with citations and an
+   explicit "I do not know" path.
+
+**Gate to leave Stage 3:** a real payment completes, and a stranger forwards a PDF
+without being asked to.
+
+---
+
+## Phase map
+
+| Phase | Stage | State |
+|---|---|---|
+| 0.2 Claim proven in a real builder | — | ✅ PASSED |
+| 0.3.1 Deterministic measurement | 1 | ✅ DONE |
+| **0.3 Local surfaces hardened** | **1** | **in progress** |
+| 0.4 Catalog with intent | 1 | pending |
+| 0.5 Report declares its validity | 1 | pending |
+| 0.6 Signals the engine computes | 1 | pending |
+| **0.8 Remote MCP, hardened** | **2** | pending |
+| **0.9 Subscription product** | **3** | pending |
+| 0.7 Revenue plumbing | 3 | folded into 0.9 |
 
 **0.2 is a hard gate.** No phase after it starts until it reports.
+**Stage 1 must be green before Stage 2 starts.** The standing check never changes:
+*does the CLI still work with no account?*
 
 ---
 
