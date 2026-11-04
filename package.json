@@ -18,7 +18,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gonzoblasco/preflight.git"
+    "url": "git+https://github.com/gonzoblasco/preflight-a11y.git"
   },
   "bin": {
     "preflight": "./scripts/cli.js"
@@ -62,5 +62,9 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "homepage": "https://github.com/gonzoblasco/preflight-a11y#readme",
+  "bugs": {
+    "url": "https://github.com/gonzoblasco/preflight-a11y/issues"
   }
 }
