@@ -1,8 +1,34 @@
 {
-  "ranAt": "2026-11-04T13:37:50.362Z",
+  "ranAt": "2026-11-04T14:25:07.409Z",
   "results": [
     {
-      "label": "self-test (kimi)",
+      "label": "claude-code",
+      "ok": true,
+      "scoreBefore": 7,
+      "scoreAfter": 100,
+      "gradeBefore": "F",
+      "gradeAfter": "A",
+      "blockingBefore": 5,
+      "blockingAfter": 0,
+      "closed": [
+        "image-alt",
+        "color-contrast",
+        "html-has-lang",
+        "list",
+        "heading-order",
+        "landmark-one-main",
+        "meta-viewport",
+        "region"
+      ],
+      "persisted": [],
+      "introduced": [],
+      "totalBefore": 8,
+      "closedRatio": 1,
+      "layoutIntact": true,
+      "layoutProblems": []
+    },
+    {
+      "label": "omp",
       "ok": true,
       "scoreBefore": 7,
       "scoreAfter": 100,
@@ -28,5 +54,5 @@
       "layoutProblems": []
     }
   ],
-  "verdict": "GATE NOT PASSED — 1 of 1 builders meet both conditions (>= 5/8 closed, layout intact)."
+  "verdict": "GATE PASSED — 2 of 2 builders closed >= 5/8 findings without damaging the page."
 }

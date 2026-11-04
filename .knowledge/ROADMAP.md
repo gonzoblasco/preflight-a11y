@@ -29,7 +29,19 @@
 
 ---
 
-## Phase 0.2 — Prove or kill the sales claim
+## Phase 0.2 — Prove or kill the sales claim  ✅ **PASSED (2026-11-04)**
+
+> **Result:** 2 of 2 agentic editors closed **8/8** findings, 7/100 F → 100/100 A,
+> content intact. Recorded in `.knowledge/phase-0.2/RESULT.md`.
+>
+> **Caveat kept on the record:** the arms were Claude Code and omp, not v0 or
+> Lovable by name. Same execution class (model with file access + tools), not the
+> same product. The v0/Lovable arms are unrun and the runbook stays valid.
+>
+> **New finding:** `gpt-oss` failed 8/8 one-shot but passed 8/8 inside omp. The
+> prompt needs an **executor with tools**, not a chat completion. This changes
+> the product's promise: "paste it into a builder" is really "give it to an
+> agent that can edit and re-read".
 
 **Goal.** Answer one question with evidence: *does the fix prompt work in the
 tools our customers actually use?*
