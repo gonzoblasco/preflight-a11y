@@ -1,0 +1,32 @@
+name: Preflight
+description: Accessibility gate for every pull request. Fails the build when a screen reader user would be blocked.
+author: Kanam
+branding:
+  icon: check-circle
+  color: orange
+inputs:
+  url:
+    description: URL to scan (use your preview deployment URL).
+    required: true
+  min-score:
+    description: Minimum score to pass (0-100). Leave empty to only gate on blocking issues.
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Install
+      shell: bash
+      run: npm install --no-save playwright@1.64.1 axe-core@4.14.0 @axe-core/playwright@4.14.0 jsdom@30.0.1 @guidepup/virtual-screen-reader@0.32.1
+    - name: Install browser
+      shell: bash
+      run: npx playwright install --with-deps chromium
+    - name: Scan
+      shell: bash
+      env:
+        INPUT_URL: ${{ inputs.url }}
+        INPUT_MIN: ${{ inputs.min-score }}
+      run: |
+        ARGS=("$INPUT_URL" --markdown --fail-on-blocking)
+        if [ -n "$INPUT_MIN" ]; then ARGS+=(--min-score "$INPUT_MIN"); fi
+        npx tsx scripts/cli.ts "${ARGS[@]}" >> "$GITHUB_STEP_SUMMARY"

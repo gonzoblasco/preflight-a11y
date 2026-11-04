@@ -1,0 +1,17 @@
+node_modules/
+.next/
+dist/
+out/
+*.tsbuildinfo
+.DS_Store
+.env
+.env.local
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/reports/
+playwright-report/
+test-results/
+
+# local database and scan data
+data/

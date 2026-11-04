@@ -1,0 +1,389 @@
+/*
+  Design System: Technical, Confident, Dark.
+  Accent: #F5A524 (Warm Amber).
+  Reasoning: Amber provides high contrast against near-black (#0B0C0E) while 
+  evoking a "warning/signal" vibe that is authoritative without being 
+  as generic as SaaS purple or as alarming as pure red.
+*/
+
+:root {
+  --bg-canvas: #0B0C0E;
+  --bg-surface: #16181B;
+  --bg-input: #1F2226;
+  
+  --accent: #F5A524;
+  --accent-muted: #C4881A;
+  
+  --text-main: #E8E8EA;
+  --text-muted: #8B8F98;
+  --text-on-accent: #0B0C0E;
+  
+  --border: #2D3136;
+  --border-focus: var(--accent);
+  
+  --font-mono: ui-monospace, SF Mono, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  
+  --scale-display: 56px;
+  --scale-h2: 32px;
+  --scale-body: 16px;
+  --line-height-body: 1.6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: var(--scale-body);
+  line-height: var(--line-height-body);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 {
+  font-size: var(--scale-display);
+  line-height: 1.05;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: var(--scale-h2);
+  font-weight: 600;
+  margin: 2.5rem 0 1rem 0;
+}
+
+p {
+  margin-bottom: 1rem;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Accessibility Focus */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Layout Components */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 0;
+}
+
+.wordmark {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-main);
+}
+
+.hero {
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.hero-sub {
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  max-width: 600px;
+  margin: 0 auto 3rem auto;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Form */
+.scan-form {
+  display: flex;
+  gap: 0.75rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  flex-grow: 1;
+}
+
+.input-group label {
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+}
+
+input[type="url"] {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+}
+
+button {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border: none;
+  padding: 0 1.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  height: 46px;
+  align-self: flex-end;
+}
+
+button:hover {
+  background: var(--accent-muted);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Cards */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin: 3rem 0;
+}
+
+@media (max-width: 820px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.card svg {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 1rem;
+  color: var(--accent);
+}
+
+.card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.125rem;
+}
+
+/* Lists & Data */
+.recent-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+}
+
+.recent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.badge {
+  font-family: var(--font-mono);
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+/* Grade colors. Amber family for middling scores, red only when blocked.
+   Every pair below is >= 4.5:1 against its own text color. */
+.badge-A { background: #1F4D22; color: #E8F5E9; }
+.badge-B { background: #2F5520; color: #EDF7E4; }
+.badge-C { background: #5C4A12; color: #FBE9B7; }
+.badge-D { background: #6B3A12; color: #FBE0C8; }
+.badge-F { background: #7A1B1B; color: #FBE0E0; }
+
+.footer {
+  margin-top: 5rem;
+  padding: 3rem 0;
+  border-top: 1px solid var(--border);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* Report Page Specifics */
+.score-block {
+  text-align: center;
+  padding: 3rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.score-grade {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 128px;
+  height: 128px;
+  border-radius: 16px;
+  font-size: 4.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.score-value {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  display: block;
+  margin-top: 1rem;
+}
+
+/* Live progress line under the scan form. Occupies its own row so the form
+   height does not jump when a status appears. */
+.scan-status {
+  grid-column: 1 / -1;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  min-height: 1.25rem;
+}
+
+.transcript {
+  background: var(--bg-surface);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.transcript-list {
+  list-style: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+.transcript-row {
+  display: flex;
+  gap: 1rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.transcript-index {
+  color: var(--text-muted);
+  min-width: 30px;
+}
+
+.transcript-gap {
+  border-left: 3px solid var(--accent);
+  padding-left: 1rem;
+  background: rgba(245, 165, 36, 0.05);
+}
+
+.finding {
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.finding summary {
+  padding: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.impact-pill {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.impact-critical { background: #B22222; color: #fff; }
+.impact-serious { background: #D97706; color: #fff; }
+.impact-moderate { background: #B45309; color: #fff; }
+.impact-minor { background: #4B5563; color: #fff; }
+
+.finding-content {
+  padding: 0 1rem 1rem 1rem;
+}
+
+blockquote {
+  border-left: 3px solid var(--border);
+  margin: 1rem 0;
+  padding-left: 1rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+pre {
+  background: var(--bg-input);
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  border: 1px solid var(--border);
+}
+
+.signals-dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.signals-dt {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.signals-dd {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
