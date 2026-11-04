@@ -212,6 +212,8 @@ export async function scanPage(url: string, options: ScanOptions = {}): Promise<
           'The narration comes from a virtual screen reader, not VoiceOver or NVDA. It reflects what the DOM declares, not how a specific reader times its announcements.',
           'Content behind interaction (modals, tabs, menus) is only scanned if it is open on load.',
           'Only the single URL you entered is scanned; linked pages are not followed.',
+          'The repair prompt is not model-agnostic: it was verified end to end against Lovable (a live product repaired from 49/100 F to 100/100 A), Claude Code and omp. One model family declined a multi-element colour instruction in three consecutive runs. Verify the result after applying it; do not assume it worked.',
+          'Findings are read twice and only those present in both reads are reported, so a transient state (a consent banner mid-mount) is not counted as a defect of the page.',
         ],
       };
     } finally {

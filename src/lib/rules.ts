@@ -227,16 +227,19 @@ export const RULES: Record<string, RuleCopy> = {
   },
   region: {
     plainLanguage:
-      'Some content sits outside any landmark, so it is unreachable by landmark navigation.',
+      'Content sits outside any landmark. A screen reader can only jump between landmarks, so this content is only reachable by walking the whole page.',
     wcag: ['1.3.1'],
     livedExperience:
-      'A user jumping between landmarks never arrives at this content. It is effectively invisible.',
-    remediation: 'Place all content inside header, nav, main, aside or footer.',
+      'The user asks the reader for the main region and lands nowhere useful, then has to listen through the menu, the banner and the footer again — on every page. On a site with many blocks this is the difference between browsing and giving up.',
+    remediation:
+      'Place every block inside header, nav, main, aside or footer. Wrap the page body in one <main>; that single change usually resolves most occurrences.',
     fix: (n) => ({
       target: n.selector,
-      instruction: 'Move this content inside <main> or another landmark, or wrap it in one.',
-      snippet: `<main><section>…</section></main>`,
-      acceptance: 'After the fix, landmark navigation reaches the content.',
+      instruction:
+        'Wrap this content in a landmark. If the page has no <main> yet, add it first: that single element usually resolves most of these. Sections with a heading should be <section aria-labelledby="…"> rather than a bare <div>.',
+      snippet: `<main>\n  <section aria-labelledby="pricing-heading">…</section>\n</main>`,
+      acceptance:
+        'After the fix, landmark navigation reaches the content, and the reader announces the section by its heading.',
     }),
   },
   'aria-hidden-focus': {
@@ -398,6 +401,94 @@ export const RULES: Record<string, RuleCopy> = {
       instruction:
         'Either change the role to one that supports the attribute, or remove the attribute.',
       acceptance: 'After the fix, the reader announces a state that matches what the screen shows.',
+    }),
+  },
+  'label-content-name-mismatch': {
+    plainLanguage:
+      'The accessible name does not contain the visible text, so voice control cannot activate the control by what the user can read.',
+    wcag: ['2.5.3'],
+    livedExperience:
+      'A user says "click Pricing" and nothing happens, because the button was labelled something else entirely. They can see the word and cannot use it.',
+    remediation: 'The accessible name must start with, or contain, the visible text.',
+    fix: (n) => ({
+      target: n.selector,
+      instruction:
+        'Make the accessible name include the visible label, verbatim. If the visible text is "Pricing", the aria-label must contain "Pricing" — not just an equivalent idea.',
+      snippet: `<button aria-label="Pricing plans">Pricing</button>`,
+      acceptance:
+        'After the fix, saying the visible text aloud activates the control, and the reader announces a name that contains it.',
+    }),
+  },
+  'landmark-unique': {
+    plainLanguage:
+      'Two landmarks share the same role and the same name, so landmark navigation cannot tell them apart.',
+    wcag: ['1.3.1'],
+    livedExperience:
+      'The user is offered "navigation, navigation" and must enter both to find out which one holds the menu they want.',
+    remediation: 'Give each landmark a distinct aria-label that names its purpose.',
+    fix: (n) => ({
+      target: n.selector,
+      instruction:
+        'Add a distinct aria-label to each landmark of the same role: "Main", "Footer", "Breadcrumb", "Product filters". Distinct names, not numbering.',
+      snippet: `<nav aria-label="Product filters">…</nav>`,
+      acceptance:
+        'After the fix, every landmark is announced with a name that tells the user which one it is.',
+    }),
+  },
+  'empty-heading': {
+    plainLanguage: 'A heading exists but has no text, so the page outline has an empty entry.',
+    wcag: ['1.3.1', '2.4.6'],
+    livedExperience:
+      'A user navigating by headings hears "heading, level 3" and silence. They cannot tell whether they missed something or the page is broken.',
+    remediation: 'Give the heading text, or remove it if it carries no meaning.',
+    fix: (n) => ({
+      target: n.selector,
+      instruction:
+        'Either put the real title in it, or delete the element. An empty heading is never decorative — it is an entry in the outline that leads nowhere.',
+      snippet: `<h3>Latest models</h3>`,
+      acceptance: 'After the fix, the reader announces a heading with text, or no heading at all.',
+    }),
+  },
+  'aria-allowed-role': {
+    plainLanguage:
+      'An ARIA role is not valid for the element it is applied to, so the browser ignores it.',
+    wcag: ['4.1.2'],
+    livedExperience:
+      'The reader announces the element as its native type while the page claims something else. The user gets neither the expected behaviour nor a warning.',
+    remediation: 'Use a role the element supports, or change the element.',
+    fix: (n) => ({
+      target: n.selector,
+      instruction:
+        'Either change the element to one that supports this role (an <article> for "article", a <button> for "button"), or drop the role and keep the native semantics.',
+      acceptance: 'After the fix, the announced role matches what the widget actually is.',
+    }),
+  },
+  'aria-prohibited-attr': {
+    plainLanguage:
+      'An ARIA attribute is forbidden on this element, so assistive tech may announce something false.',
+    wcag: ['4.1.2'],
+    livedExperience:
+      'The user is told an element is a label or a heading when it is not, and navigates by a structure that does not exist.',
+    remediation: 'Remove the prohibited attribute, or use an element that allows it.',
+    fix: (n) => ({
+      target: n.selector,
+      instruction:
+        'Remove the attribute named in the failure summary. If the intent was to label something, use aria-label on a role that permits it, or a real <label>.',
+      acceptance: 'After the fix, the reader announces only attributes the element can carry.',
+    }),
+  },
+  'presentation-role-conflict': {
+    plainLanguage:
+      'An element is marked as presentational but also carries attributes or semantics that need it to be exposed.',
+    wcag: ['4.1.2'],
+    livedExperience:
+      'The element is hidden from the reader even though it is interactive or labelled. It silently disappears from the page for the user.',
+    remediation: 'Choose one: presentational, or a real role with real semantics.',
+    fix: (n) => ({
+      target: n.selector,
+      instruction:
+        'Either remove role="presentation"/"none" so the element keeps its semantics, or remove the attributes that require it to be exposed. Never both at once.',
+      acceptance: 'After the fix, every interactive element is announced with a role.',
     }),
   },
 };
