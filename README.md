@@ -39,14 +39,32 @@ the way it will actually be consumed.
 ## Quickstart
 
 ```bash
-npx preflight-a11y example.com
+git clone https://github.com/gonzoblasco/preflight-a11y
+cd preflight-a11y
+npm install
+npx playwright install chromium       # or use your system Chrome
+npm run dev                           # http://localhost:4317
 ```
 
+Then scan your own dev server (localhost is accepted — it scans *your* code, which
+is the whole point):
+
 ```bash
-npx preflight-a11y https://your-site.com --min-score 90 --fail-on-blocking
-npx preflight-a11y https://your-site.com --markdown --out report.md
-npx preflight-a11y https://your-site.com --json
+npm run dev                     # your app on :3000
+node scripts/cli.js http://localhost:3000
 ```
+
+or any public URL:
+
+```bash
+node scripts/cli.js https://your-site.com --min-score 90 --fail-on-blocking
+node scripts/cli.js https://your-site.com --markdown --out report.md
+node scripts/cli.js https://your-site.com --json
+```
+
+> **Note:** `npx preflight-a11y …` will land **once the package is published**.
+> Until then, the commands above work from a clone. There is no public npm package
+> yet — this is the local-first, open-source stage.
 
 ### Scan what you are building, not what you shipped
 
@@ -64,8 +82,8 @@ every change. The guard exists for the hosted server, where a stranger's URL mus
 never reach our network — so the remote MCP and the API refuse private hosts, and
 the CLI does not. Pass `--public-only` if you want the strict behaviour locally.
 
-Exit codes are the point: `0` pass, `1` gate failed, `2` scan error. Drop it in CI
-and a pull request that ships an unusable button stops being merged.
+Exit codes are the point: `0` pass, `1` gate failed, `2` scan error. Drop it in CI (`action.yml`) and a pull request that ships an unusable
+button stops being merged.
 
 From source:
 
@@ -214,7 +232,7 @@ The test suite serves deliberately broken fixtures from a local `node:http`
 server, so it never touches the network.
 
 ```bash
-npx tsx scripts/battery.mjs   # determinism gate: 10 real sites, twice each
+node scripts/cli.js   # determinism gate: 10 real sites, twice each
 ```
 
 ---
