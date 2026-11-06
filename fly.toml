@@ -1,0 +1,42 @@
+# Fly.io config for the Preflight MCP server.
+#
+# Why a single machine with a fixed process: the scanner reuses one browser and
+# caps concurrency per process (src/lib/scan.ts). Scaling out would multiply that
+# cap, since the limiter is in-process — a global limit needs a shared store,
+# which is deliberately not built until a second replica exists.
+app = "preflight-mcp"
+primary_region = "gru"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+  PREFLIGHT_CHANNEL = "chromium"
+  PREFLIGHT_MAX_CONCURRENT = "4"
+  # Conservative defaults for a shared machine. Raise per plan, not globally.
+  PREFLIGHT_BURST_MAX = "30"
+  PREFLIGHT_DAILY_MAX = "500"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # The scan is a request that takes seconds; the proxy must outwait it.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "20s"
+  method = "GET"
+  path = "/health"
+
+[[vm]]
+  # Chromium needs more than the 256MB default. 2GB is the measured floor for
+  # four concurrent contexts plus axe and the reader.
+  memory = "2gb"
+  cpu_kind = "shared"
+  cpus = 1
