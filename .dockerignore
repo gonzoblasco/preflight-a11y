@@ -1,0 +1,11 @@
+node_modules
+.next
+data
+experiments
+.knowledge
+.claude
+test
+*.md
+!README.md
+.DS_Store
+data/*.db
