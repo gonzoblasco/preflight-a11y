@@ -36,7 +36,9 @@ function json(res: ServerResponse, status: number, body: unknown): void {
 /** Constant-time comparison against the configured token. */
 function authorized(req: IncomingMessage): boolean {
   const expected = process.env.PREFLIGHT_MCP_TOKEN;
-  if (!expected) return true; // no token configured: local/dev use only
+  // No token configured is only reachable when we are not in production:
+  // runHttp() refuses to start in that case. Local dev gets through.
+  if (!expected) return true;
   const header = req.headers.authorization ?? '';
   const provided = header.startsWith('Bearer ') ? header.slice(7) : '';
   if (provided.length !== expected.length) return false;
@@ -72,6 +74,24 @@ async function readBody(req: IncomingMessage): Promise<unknown> {
 async function runHttp(): Promise<void> {
   const port = Number(process.env.PORT ?? 8080);
   const requireToken = Boolean(process.env.PREFLIGHT_MCP_TOKEN);
+
+  /**
+   * Fail closed in production.
+   *
+   * Without a token the server authenticates nobody, and every scan would be an
+   * unauthenticated Chromium on our machine. Allowing that in local development
+   * is convenient; allowing it where the process is reachable is a free compute
+   * faucet. The decision is explicit, not inferred from NODE_ENV.
+   */
+  const isProduction =
+    process.env.NODE_ENV === 'production' || process.env.PREFLIGHT_REQUIRE_AUTH === '1';
+  if (isProduction && !requireToken) {
+    process.stderr.write(
+      'preflight-mcp: refusing to start. PREFLIGHT_MCP_TOKEN is required when NODE_ENV=production ' +
+        '(or PREFLIGHT_REQUIRE_AUTH=1). An unauthenticated HTTP server exposes unlimited scans.\n',
+    );
+    process.exit(1);
+  }
 
   const httpServer = createServer(async (req, res) => {
     // CORS is permissive on purpose: MCP clients are user agents, and the
