@@ -74,7 +74,7 @@ dev server protects nobody.
 
 ```bash
 npm run dev                              # your app on :3000
-npx preflight-a11y http://localhost:3000  # scan it while you work
+node scripts/cli.js http://localhost:3000  # scan it while you work
 ```
 
 That is the difference between a gate you run once at launch and one you run on
@@ -206,7 +206,7 @@ framework:
 
 | Surface | For |
 |---|---|
-| **CLI** `npx preflight-a11y` | developers, CI |
+| **CLI** `node scripts/cli.js` | developers, CI |
 | **GitHub Action** | block a PR that ships a blocking defect |
 | **Web report** | a report a non-developer can read and forward |
 | **MCP server** (stdio or HTTP) | the gate inside an AI builder's loop |
