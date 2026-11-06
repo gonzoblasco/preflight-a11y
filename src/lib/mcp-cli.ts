@@ -22,7 +22,8 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createPreflightServer } from './mcp.js';
-import { closeBrowser } from './scan.js';
+import { fingerprint } from './ratelimit.js';
+import { activeScans, closeBrowser } from './scan.js';
 
 const VERSION = '0.1.0';
 const mode = process.argv.includes('--http') ? 'http' : 'stdio';
@@ -40,6 +41,18 @@ function authorized(req: IncomingMessage): boolean {
   const provided = header.startsWith('Bearer ') ? header.slice(7) : '';
   if (provided.length !== expected.length) return false;
   return timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+}
+
+/**
+ * Quota identity for a request: a hash of the token, never the token itself.
+ * The database stores usage counters keyed by this, so a leaked DB row cannot be
+ * replayed as a credential.
+ */
+function quotaKeyFor(req: IncomingMessage): string | undefined {
+  const header = req.headers.authorization ?? '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) return undefined;
+  return fingerprint(token, process.env.PREFLIGHT_SALT ?? 'preflight-mcp');
 }
 
 async function readBody(req: IncomingMessage): Promise<unknown> {
@@ -80,6 +93,10 @@ async function runHttp(): Promise<void> {
         service: 'preflight-mcp',
         version: VERSION,
         auth: requireToken,
+        // Visible on purpose: an operator must see saturation before a client
+        // reports a slow scan.
+        activeScans: activeScans(),
+        maxConcurrent: Number(process.env.PREFLIGHT_MAX_CONCURRENT ?? 4),
       });
       return;
     }
@@ -99,6 +116,7 @@ async function runHttp(): Promise<void> {
       name: 'preflight',
       version: VERSION,
       allowPrivate: false,
+      quotaKey: quotaKeyFor(req),
     });
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     await server.connect(transport);

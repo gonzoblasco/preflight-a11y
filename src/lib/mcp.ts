@@ -22,6 +22,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { narrate } from './narrate.js';
+import { checkQuota, recordUsage } from './ratelimit.js';
 import { RULES } from './rules.js';
 import { ScanError, scanPage } from './scan.js';
 import { verdict } from './score.js';
@@ -72,6 +73,14 @@ export interface PreflightServerInfo {
    * False for HTTP: a remote caller must never reach our internal network.
    */
   allowPrivate?: boolean;
+  /**
+   * Identity used for the quota, usually a hash of the caller's bearer token.
+   *
+   * Absent for stdio: a local agent runs on the caller's CPU, so metering it
+   * would charge someone for their own machine. Present for HTTP, where every
+   * scan is a Chromium on ours.
+   */
+  quotaKey?: string;
 }
 
 /**
@@ -80,6 +89,22 @@ export interface PreflightServerInfo {
  */
 export function createPreflightServer(info: PreflightServerInfo): McpServer {
   const guardOptions = { allowPrivate: info.allowPrivate ?? false };
+
+  /**
+   * Charges one scan against the caller's quota.
+   *
+   * Returns the refusal message when the caller is over the limit, or null when
+   * the call may proceed. A tool that spawns a browser must call this before
+   * spawning it: refusing afterwards still costs the CPU.
+   */
+  const chargeQuota = (): string | null => {
+    if (!info.quotaKey) return null;
+    const decision = checkQuota(info.quotaKey);
+    if (!decision.allowed) return decision.reason ?? 'Scan quota exhausted.';
+    recordUsage(info.quotaKey);
+    return null;
+  };
+
   const server = new McpServer(
     { name: info.name, version: info.version },
     {
@@ -107,6 +132,9 @@ export function createPreflightServer(info: PreflightServerInfo): McpServer {
       annotations: { ...READ_ONLY, title: 'Scan a page for accessibility defects' },
     },
     async ({ url }) => {
+      const overQuota = chargeQuota();
+      if (overQuota) return failure(overQuota);
+
       const guard = await guardUrl(url, guardOptions);
       if (!guard.ok || !guard.url) return failure(guard.reason ?? 'That URL cannot be scanned.');
 
@@ -216,6 +244,9 @@ export function createPreflightServer(info: PreflightServerInfo): McpServer {
       annotations: { ...READ_ONLY, title: 'Get a repair prompt an AI builder can execute' },
     },
     async ({ url }) => {
+      const overQuota = chargeQuota();
+      if (overQuota) return failure(overQuota);
+
       const guard = await guardUrl(url, guardOptions);
       if (!guard.ok || !guard.url) return failure(guard.reason ?? 'That URL cannot be scanned.');
 

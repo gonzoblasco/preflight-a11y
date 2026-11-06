@@ -24,6 +24,42 @@ const MAX_HTML_BYTES = 3_000_000;
 
 let browserPromise: Promise<Browser> | null = null;
 
+/**
+ * Maximum scans running at once, per process.
+ *
+ * Each scan opens a browser context and pushes a page through axe and the screen
+ * reader. Without a cap, ten concurrent MCP calls mean ten contexts racing for
+ * one machine's CPU, and every one of them gets slower — measured as p95, not as
+ * a crash. The queue is deliberate and visible: a caller waits its turn instead
+ * of degrading everyone else's answer.
+ *
+ * Set to 0 or a negative number to disable (useful for a single-machine CLI).
+ */
+const MAX_CONCURRENT = Number(process.env.PREFLIGHT_MAX_CONCURRENT ?? 4);
+
+let running = 0;
+const waiters: (() => void)[] = [];
+
+async function acquireSlot(): Promise<void> {
+  if (MAX_CONCURRENT <= 0 || running < MAX_CONCURRENT) {
+    running += 1;
+    return;
+  }
+  await new Promise<void>((resolve) => waiters.push(resolve));
+  running += 1;
+}
+
+function releaseSlot(): void {
+  running = Math.max(0, running - 1);
+  const next = waiters.shift();
+  if (next) next();
+}
+
+/** Scans currently running, for the health endpoint. */
+export function activeScans(): number {
+  return running;
+}
+
 async function getBrowser(): Promise<Browser> {
   if (!browserPromise) {
     browserPromise = chromium
@@ -61,6 +97,15 @@ export interface ScanOptions {
  * the fix prompt. Throws a typed error with a human reason on failure.
  */
 export async function scanPage(url: string, options: ScanOptions = {}): Promise<ScanResult> {
+  await acquireSlot();
+  try {
+    return await scanPageInner(url, options);
+  } finally {
+    releaseSlot();
+  }
+}
+
+async function scanPageInner(url: string, options: ScanOptions = {}): Promise<ScanResult> {
   const started = Date.now();
   const progress = options.onProgress ?? (() => undefined);
   const controller = new AbortController();
