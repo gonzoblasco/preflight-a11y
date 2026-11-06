@@ -108,13 +108,30 @@ async function runHttp(): Promise<void> {
     }
 
     if (req.url === '/health') {
+      // Unauthenticated liveness, but deliberately thin.
+      //
+      // This endpoint sits in front of auth because an orchestrator must be able
+      // to tell "process up" from "process wedged" without holding a credential.
+      // The cost is that anyone on the internet can read it, so it reports only
+      // whether the service is alive — not its version, not how busy it is.
+      // Operational detail belongs behind the token, where it cannot be used as
+      // free reconnaissance.
+      json(res, 200, { status: 'ok' });
+      return;
+    }
+
+    if (req.url === '/status') {
+      if (!authorized(req)) {
+        json(res, 401, { error: 'Missing or invalid bearer token.' });
+        return;
+      }
       json(res, 200, {
         status: 'ok',
         service: 'preflight-mcp',
         version: VERSION,
         auth: requireToken,
-        // Visible on purpose: an operator must see saturation before a client
-        // reports a slow scan.
+        // An operator needs to see saturation before a client reports a slow
+        // scan; a stranger does not.
         activeScans: activeScans(),
         maxConcurrent: Number(process.env.PREFLIGHT_MAX_CONCURRENT ?? 4),
       });
