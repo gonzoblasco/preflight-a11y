@@ -31,3 +31,4 @@ experiments/
 
 # Fly tokens are never committed
 .fly/
+.surface-audit-reports/
