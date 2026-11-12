@@ -91,6 +91,25 @@ export function recordUsage(key: string): void {
     .run(key, today());
 }
 
+/**
+ * Gives back one scan charged by `recordUsage`.
+ *
+ * Quota is charged before the browser starts, because refusing afterwards still
+ * costs the CPU. That ordering is correct for a refused or rejected target: the
+ * work was attempted against a site that said no. It is wrong for a failure on
+ * our side — a crash, a killed machine, an unexpected exception — where the
+ * caller received nothing and would otherwise lose a paid scan to our bug.
+ *
+ * Clamped at zero so a refund can never create credit.
+ */
+export function refundUsage(key: string): void {
+  getDb()
+    .prepare(
+      `UPDATE usage SET count = MAX(0, count - 1) WHERE key = ? AND day = ?`,
+    )
+    .run(key, today());
+}
+
 /** Evicts expired burst buckets so a long-lived process does not grow forever. */
 export function sweepBuckets(): void {
   const now = Date.now();

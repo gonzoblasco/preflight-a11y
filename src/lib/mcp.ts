@@ -22,7 +22,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { narrate } from './narrate.js';
-import { checkQuota, recordUsage } from './ratelimit.js';
+import { checkQuota, recordUsage, refundUsage } from './ratelimit.js';
 import { RULES } from './rules.js';
 import { ScanError, scanPage } from './scan.js';
 import { verdict } from './score.js';
@@ -158,6 +158,9 @@ export function createPreflightServer(info: PreflightServerInfo): McpServer {
           limits: result.limits,
         });
       } catch (error) {
+        // The site answered and we read it: the browser ran and the scan is paid.
+        // Only our own failure earns the slot back.
+        if (!(error instanceof ScanError) && info.quotaKey) refundUsage(info.quotaKey);
         return failure(describe(error));
       }
     },

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { saveScan } from '@/lib/db';
-import { checkQuota, fingerprint, recordUsage } from '@/lib/ratelimit';
+import { checkQuota, fingerprint, recordUsage, refundUsage } from '@/lib/ratelimit';
 import { ScanError, scanPage } from '@/lib/scan';
 import { guardUrl } from '@/lib/url-guard';
 
@@ -65,9 +65,13 @@ export async function POST(request: Request) {
       remainingToday: Math.max(0, quota.remainingToday - 1),
     });
   } catch (error) {
+    // A ScanError means the site answered and we read it: the browser ran, so the
+    // scan is paid for. Anything else is our failure, and the caller must not
+    // lose a quota slot to it.
     if (error instanceof ScanError) {
       return NextResponse.json({ error: error.message }, { status: 422 });
     }
+    refundUsage(key);
     console.error('[preflight] scan failed', error);
     return NextResponse.json(
       {
